@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EC Expert Groups Register &mdash; Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--eu-blue:#003399;--eu-yellow:#FFCC00;--eu-light:#f0f4fa;--eu-grey:#6c757d;--eu-green:#28a745;--eu-amber:#ffc107;--eu-red:#dc3545;--sidebar-w:300px}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f8f9fa;color:#212529;font-size:14px}
+a{color:var(--eu-blue)}
+.header{background:var(--eu-blue);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header h1{font-size:18px;font-weight:600}
+.header .meta{font-size:12px;opacity:.85;text-align:right}
+.header .meta span{display:block}
+.header button{background:var(--eu-yellow);color:var(--eu-blue);border:none;padding:6px 14px;border-radius:4px;font-weight:600;cursor:pointer;font-size:13px;margin-left:12px}
+.header button:hover{filter:brightness(1.1)}
+.wrap{display:flex;min-height:calc(100vh - 52px)}
+.sidebar{width:var(--sidebar-w);background:#fff;border-right:1px solid #dee2e6;padding:16px;flex-shrink:0;overflow-y:auto;max-height:calc(100vh - 52px);position:sticky;top:52px}
+.sidebar h3{font-size:13px;color:var(--eu-blue);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+.sidebar h3:first-child{margin-top:0}
+.sidebar label{display:block;font-size:12px;color:var(--eu-grey);margin-bottom:2px}
+.sidebar input[type=text],.sidebar select{width:100%;padding:7px 10px;border:1px solid #ced4da;border-radius:4px;font-size:13px;margin-bottom:10px}
+.sidebar input:focus,.sidebar select:focus{outline:none;border-color:var(--eu-blue);box-shadow:0 0 0 2px rgba(0,51,153,.15)}
+.sidebar .clear-btn{width:100%;padding:7px;background:var(--eu-light);border:1px solid #ced4da;border-radius:4px;cursor:pointer;font-size:12px;color:var(--eu-blue);margin-top:6px}
+.sidebar .clear-btn:hover{background:#e2e8f2}
+.main{flex:1;padding:20px;overflow-x:auto;min-width:0}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:center}
+.kpi .num{font-size:28px;font-weight:700;color:var(--eu-blue)}
+.kpi .lbl{font-size:12px;color:var(--eu-grey);margin-top:2px}
+.charts-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px}
+.chart-box{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.chart-box h4{font-size:13px;color:var(--eu-blue);margin-bottom:10px}
+.chart-box canvas{max-height:220px}
+.tbl-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden}
+.tbl-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #dee2e6;flex-wrap:wrap;gap:8px}
+.tbl-bar .info{font-size:13px;color:var(--eu-grey)}
+.tbl-bar .exports button{background:var(--eu-blue);color:#fff;border:none;padding:5px 12px;border-radius:4px;font-size:12px;cursor:pointer;margin-left:6px}
+.tbl-bar .exports button:hover{opacity:.9}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--eu-light);padding:10px 12px;text-align:left;font-size:12px;color:var(--eu-blue);cursor:pointer;user-select:none;white-space:nowrap;border-bottom:2px solid var(--eu-blue)}
+thead th:hover{background:#dce3f0}
+thead th .arrow{margin-left:4px;font-size:10px}
+tbody tr{border-bottom:1px solid #eee;cursor:pointer;transition:background .15s}
+tbody tr:hover{background:var(--eu-light)}
+tbody td{padding:9px 12px;font-size:13px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-active{background:#d4edda;color:#155724}
+.badge-closed{background:#e2e3e5;color:#383d41}
+.badge-onhold{background:#fff3cd;color:#856404}
+.pager{display:flex;align-items:center;justify-content:center;padding:12px;gap:6px;border-top:1px solid #dee2e6}
+.pager button{padding:5px 11px;border:1px solid #ced4da;background:#fff;border-radius:4px;cursor:pointer;font-size:12px}
+.pager button.active{background:var(--eu-blue);color:#fff;border-color:var(--eu-blue)}
+.pager button:disabled{opacity:.4;cursor:default}
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none}
+.detail-overlay.open{display:flex;justify-content:flex-end}
+.detail-panel{width:min(600px,90vw);background:#fff;height:100%;overflow-y:auto;padding:24px;box-shadow:-4px 0 20px rgba(0,0,0,.15)}
+.detail-panel .close-btn{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:var(--eu-grey);padding:0 4px}
+.detail-panel .close-btn:hover{color:var(--eu-blue)}
+.detail-panel h2{font-size:17px;color:var(--eu-blue);margin-bottom:4px;padding-right:30px}
+.detail-panel .code-line{font-size:13px;color:var(--eu-grey);margin-bottom:12px}
+.detail-section{margin-bottom:18px}
+.detail-section h4{font-size:13px;color:var(--eu-blue);border-bottom:1px solid #eee;padding-bottom:4px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
+.detail-section .field{margin-bottom:6px;font-size:13px}
+.detail-section .field .fl{color:var(--eu-grey);min-width:120px;display:inline-block}
+.detail-section .mission-text{font-size:13px;line-height:1.6;white-space:pre-wrap;max-height:300px;overflow-y:auto;background:var(--eu-light);padding:10px;border-radius:4px}
+.detail-section a{word-break:break-all}
+.footer{background:#fff;border-top:1px solid #dee2e6;padding:12px 24px;font-size:11px;color:var(--eu-grey);text-align:center;line-height:1.6}
+.loading-overlay{position:fixed;inset:0;background:rgba(248,249,250,.95);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.loading-overlay.hidden{display:none}
+.loading-overlay .lds{font-size:16px;color:var(--eu-blue);font-weight:600}
+.loading-overlay .sub{font-size:13px;color:var(--eu-grey);margin-top:8px}
+@media print{.sidebar,.header button,.tbl-bar .exports,.pager,.footer{display:none}.wrap{display:block}.main{padding:10px}.detail-overlay{position:static;display:block!important;background:none}.detail-panel{width:100%;box-shadow:none;position:static}}
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="lds">Loading Expert Groups Register...</div>
+  <div class="sub">Preparing records</div>
+</div>
+<div class="header">
+  <h1>EC Expert Groups Register</h1>
+  <div style="display:flex;align-items:center">
+    <div class="meta"><span id="metaCount"></span><span id="metaDate"></span></div>
+    <button onclick="app.refresh()" title="Reload view">&#8635; Refresh View</button>
+  </div>
+</div>
+<div class="wrap">
+  <aside class="sidebar" id="sidebar">
+    <h3>Search</h3>
+    <label for="searchInput">Free-text search</label>
+    <input type="text" id="searchInput" placeholder="Name, code or mission...">
+    <h3>Filters</h3>
+    <label for="fStatus">Status</label>
+    <select id="fStatus"><option value="">All statuses</option></select>
+    <label for="fType">Type</label>
+    <select id="fType"><option value="">All</option><option value="MAIN">Main Group</option><option value="SUBGROUP">Sub-group</option></select>
+    <label for="fDG">Lead DG</label>
+    <select id="fDG"><option value="">All DGs</option></select>
+    <label for="fPolicy">Policy Area</label>
+    <select id="fPolicy"><option value="">All policy areas</option></select>
+    <label for="fTask">Task</label>
+    <select id="fTask"><option value="">All tasks</option></select>
+    <label for="fFormal">Formal / Informal</label>
+    <select id="fFormal"><option value="">All</option><option value="Formal">Formal</option><option value="Informal">Informal</option></select>
+    <button class="clear-btn" onclick="app.clearFilters()">Clear all filters</button>
+  </aside>
+  <main class="main">
+    <div class="kpi-row" id="kpiRow"></div>
+    <div class="charts-row" id="chartsRow">
+      <div class="chart-box"><h4>By Status</h4><canvas id="chartStatus"></canvas></div>
+      <div class="chart-box"><h4>By Type</h4><canvas id="chartType"></canvas></div>
+      <div class="chart-box"><h4>Top 10 Lead DGs</h4><canvas id="chartDG"></canvas></div>
+      <div class="chart-box"><h4>Top 10 Policy Areas</h4><canvas id="chartPolicy"></canvas></div>
+    </div>
+    <div class="tbl-wrap">
+      <div class="tbl-bar">
+        <span class="info" id="tblInfo"></span>
+        <div class="exports">
+          <button onclick="app.exportCSV()">Export CSV</button>
+          <button onclick="app.exportJSON()">Export JSON</button>
+        </div>
+      </div>
+      <table><thead><tr id="tblHead"></tr></thead><tbody id="tblBody"></tbody></table>
+      <div class="pager" id="pager"></div>
+    </div>
+  </main>
+</div>
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel" id="detailPanel"></div>
+</div>
+<footer class="footer">
+  Source: European Commission - Register of Expert Groups. Data reusable under Commission Decision 2011/833/EU.<br>
+  Ferramenta desenvolvida para a DCIRI/DSSD/SGGov - Dados gerados a partir da API da Comissao Europeia.
+</footer>
+<script>
+'use strict';
+const DATA = '__DATA_PLACEHOLDER__';
+const REF  = '__REF_PLACEHOLDER__';
+const GEN_DATE = '__GENDATE__';
+class App {
+  constructor(){this.allData=DATA;this.ref=REF;this.filtered=[];this.page=0;this.pageSize=50;this.sortCol='code';this.sortAsc=true;this.charts={};this.columns=[{key:'code',label:'Code'},{key:'title',label:'Name'},{key:'leadDgs',label:'Lead DG'},{key:'type',label:'Type'},{key:'status',label:'Status'},{key:'policyAreas',label:'Policy Area'}];}
+  init(){document.getElementById('metaCount').textContent=this.allData.length+' groups loaded';document.getElementById('metaDate').textContent='Data as of: '+GEN_DATE;this.populateFilters();this.buildTableHead();this.applyFilters();this.bindEvents();document.getElementById('loadingOverlay').classList.add('hidden');}
+  populateFilters(){const fill=(id,items,vk,lk)=>{const sel=document.getElementById(id);(items||[]).forEach(it=>{const o=document.createElement('option');o.value=it[vk||'code'];o.textContent=it[lk||'label'];sel.appendChild(o);});};fill('fStatus',this.ref.statuses,'code','label');fill('fDG',this.ref.dgs,'code','label');fill('fPolicy',this.ref.policyAreas,'code','label');fill('fTask',this.ref.tasks,'code','label');}
+  bindEvents(){let db;document.getElementById('searchInput').addEventListener('input',()=>{clearTimeout(db);db=setTimeout(()=>this.applyFilters(),150);});['fStatus','fType','fDG','fPolicy','fTask','fFormal'].forEach(id=>{document.getElementById(id).addEventListener('change',()=>this.applyFilters());});document.addEventListener('keydown',e=>{if(e.key==='Escape')this.closeDetail();});}
+  applyFilters(){const q=document.getElementById('searchInput').value.toLowerCase().trim();const st=document.getElementById('fStatus').value;const tp=document.getElementById('fType').value;const dg=document.getElementById('fDG').value;const pa=document.getElementById('fPolicy').value;const tk=document.getElementById('fTask').value;const fm=document.getElementById('fFormal').value;this.filtered=this.allData.filter(r=>{if(q&&!(r.code.toLowerCase().includes(q)||r.title.toLowerCase().includes(q)||(r.mission||'').toLowerCase().includes(q)))return false;if(st&&r.statusCode!==st)return false;if(tp&&r.type!==tp)return false;if(dg&&!r.leadDgs.includes(dg))return false;if(pa&&!r.policyAreas.includes(pa))return false;if(tk&&!r.tasks.includes(tk))return false;if(fm&&!r.types.includes(fm))return false;return true;});this.page=0;this.sortData();this.renderKPIs();this.renderCharts();this.renderTable();}
+  clearFilters(){document.getElementById('searchInput').value='';['fStatus','fType','fDG','fPolicy','fTask','fFormal'].forEach(id=>{document.getElementById(id).value='';});this.applyFilters();}
+  sortData(){const k=this.sortCol;const d=this.sortAsc?1:-1;this.filtered.sort((a,b)=>{const va=(a[k]||'').toString().toLowerCase();const vb=(b[k]||'').toString().toLowerCase();return va<vb?-d:va>vb?d:0;});}
+  buildTableHead(){const tr=document.getElementById('tblHead');tr.innerHTML='';this.columns.forEach(c=>{const th=document.createElement('th');th.textContent=c.label;th.onclick=()=>{if(this.sortCol===c.key)this.sortAsc=!this.sortAsc;else{this.sortCol=c.key;this.sortAsc=true;}this.sortData();this.renderTable();this.updateSortArrows();};const arrow=document.createElement('span');arrow.className='arrow';th.appendChild(arrow);tr.appendChild(th);});this.updateSortArrows();}
+  updateSortArrows(){const ths=document.querySelectorAll('#tblHead th');ths.forEach((th,i)=>{const arrow=th.querySelector('.arrow');if(this.columns[i].key===this.sortCol){arrow.textContent=this.sortAsc?' \u25B2':' \u25BC';}else{arrow.textContent='';}});}
+  renderKPIs(){const d=this.filtered;const active=d.filter(r=>r.statusCode==='ACTIVE').length;const closed=d.filter(r=>r.statusCode==='DISABLED').length;const main=d.filter(r=>r.type==='MAIN').length;const kpis=[{num:d.length,lbl:'Total (filtered)'},{num:active,lbl:'Active'},{num:closed,lbl:'Closed'},{num:main,lbl:'Main Groups'}];document.getElementById('kpiRow').innerHTML=kpis.map(k=>'<div class="kpi"><div class="num">'+k.num+'</div><div class="lbl">'+k.lbl+'</div></div>').join('');}
+  renderCharts(){if(typeof Chart==='undefined')return;this._doughnut('chartStatus',this._count('status'),['#28a745','#6c757d','#ffc107','#dc3545']);this._doughnut('chartType',this._count('type'),['#003399','#66a3ff']);this._bar('chartDG',this._topN('leadDgs',10));this._bar('chartPolicy',this._topN('policyAreas',10));}
+  _count(key){const m={};this.filtered.forEach(r=>{const v=r[key]||'Unknown';m[v]=(m[v]||0)+1;});return m;}
+  _topN(key,n){const m={};this.filtered.forEach(r=>{(r[key]||'').split(', ').filter(Boolean).forEach(v=>{m[v]=(m[v]||0)+1;});});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n).reduce((o,[k,v])=>{o[k]=v;return o;},{});}
+  _doughnut(id,data,colors){if(this.charts[id])this.charts[id].destroy();const ctx=document.getElementById(id);if(!ctx)return;this.charts[id]=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(data),datasets:[{data:Object.values(data),backgroundColor:colors}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});}
+  _bar(id,data){if(this.charts[id])this.charts[id].destroy();const ctx=document.getElementById(id);if(!ctx)return;this.charts[id]=new Chart(ctx,{type:'bar',data:{labels:Object.keys(data),datasets:[{data:Object.values(data),backgroundColor:'#003399'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:11}}},y:{ticks:{font:{size:10}}}}}});}
+  renderTable(){const start=this.page*this.pageSize;const slice=this.filtered.slice(start,start+this.pageSize);const tbody=document.getElementById('tblBody');tbody.innerHTML='';slice.forEach(r=>{const tr=document.createElement('tr');tr.onclick=()=>this.showDetail(r);this.columns.forEach(c=>{const td=document.createElement('td');if(c.key==='status'){const cls=r.statusCode==='ACTIVE'?'badge-active':r.statusCode==='DISABLED'?'badge-closed':'badge-onhold';td.innerHTML='<span class="badge '+cls+'">'+this._esc(r[c.key])+'</span>';}else{td.textContent=r[c.key]||'';td.title=r[c.key]||'';}tr.appendChild(td);});tbody.appendChild(tr);});document.getElementById('tblInfo').textContent='Showing '+(this.filtered.length?start+1:0)+'\u2013'+Math.min(start+this.pageSize,this.filtered.length)+' of '+this.filtered.length+' groups (from '+this.allData.length+' total)';this.renderPager();}
+  renderPager(){const tp=Math.ceil(this.filtered.length/this.pageSize);const pager=document.getElementById('pager');pager.innerHTML='';if(tp<=1)return;const mk=(l,pg,dis,act)=>{const b=document.createElement('button');b.textContent=l;b.disabled=dis;if(act)b.className='active';b.onclick=()=>{this.page=pg;this.renderTable();};pager.appendChild(b);};mk('\u00AB',0,this.page===0);mk('\u2039',this.page-1,this.page===0);let s=Math.max(0,this.page-3);let e=Math.min(tp,s+7);if(e-s<7)s=Math.max(0,e-7);for(let i=s;i<e;i++){mk(i+1,i,false,i===this.page);}mk('\u203A',this.page+1,this.page>=tp-1);mk('\u00BB',tp-1,this.page>=tp-1);}
+  showDetail(r){const p=document.getElementById('detailPanel');const bc=r.statusCode==='ACTIVE'?'badge-active':r.statusCode==='DISABLED'?'badge-closed':'badge-onhold';let h='<button class="close-btn" onclick="app.closeDetail()">&times;</button>';h+='<h2>'+this._esc(r.title)+'</h2>';h+='<div class="code-line">'+this._esc(r.code)+' &nbsp; <span class="badge '+bc+'">'+this._esc(r.status)+'</span></div>';h+='<div class="detail-section"><h4>Overview</h4>';const f1=[['Type',r.type],['Classification',r.types],['Scope',r.scope],['Abbreviation',r.abbr],['Lead DG(s)',r.leadDgs],['Associated DG(s)',r.assocDgs],['Policy Area(s)',r.policyAreas],['Other Policy Area',r.policyOther],['Task(s)',r.tasks]];f1.forEach(([l,v])=>{if(v)h+='<div class="field"><span class="fl">'+l+':</span> '+this._esc(v)+'</div>';});h+='</div>';if(r.mission){h+='<div class="detail-section"><h4>Mission</h4><div class="mission-text">'+this._esc(r.mission)+'</div></div>';}h+='<div class="detail-section"><h4>Dates &amp; Legal Basis</h4>';const f2=[['Published',r.pubDate],['Last Updated',r.updDate],['Creating Act',r.createAct]];f2.forEach(([l,v])=>{if(v)h+='<div class="field"><span class="fl">'+l+':</span> '+this._esc(v)+'</div>';});if(r.torLink)h+='<div class="field"><span class="fl">Terms of Ref.:</span> <a href="'+this._esc(r.torLink)+'" target="_blank">View</a></div>';h+='</div>';if(r.contact){h+='<div class="detail-section"><h4>Contact</h4><div class="field">'+this._esc(r.contact)+'</div></div>';}if(r.parentCode){h+='<div class="detail-section"><h4>Parent Group</h4><div class="field">'+this._esc(r.parentCode)+' &mdash; '+this._esc(r.parentTitle)+'</div></div>';}p.innerHTML=h;document.getElementById('detailOverlay').classList.add('open');}
+  closeDetail(){document.getElementById('detailOverlay').classList.remove('open');}
+  _esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+  exportCSV(){const hdr=this.columns.map(c=>c.label).join(',');const rows=this.filtered.map(r=>this.columns.map(c=>'"'+(r[c.key]||'').toString().replace(/"/g,'""')+'"').join(','));const csv=hdr+'\n'+rows.join('\n');this._dl(csv,'expert_groups_export_'+new Date().toISOString().slice(0,10)+'.csv','text/csv');}
+  exportJSON(){const j=JSON.stringify(this.filtered,null,2);this._dl(j,'expert_groups_export_'+new Date().toISOString().slice(0,10)+'.json','application/json');}
+  _dl(content,filename,mime){const blob=new Blob([content],{type:mime+';charset=utf-8'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),5000);}
+  refresh(){this.applyFilters();}
+}
+const app=new App();
+document.addEventListener('DOMContentLoaded',()=>app.init());
+</script>
+</body>
+</html>
