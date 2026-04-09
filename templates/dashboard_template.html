@@ -2,172 +2,539 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EC Expert Groups Register &mdash; Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EC Expert Groups Register — Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--eu-blue:#003399;--eu-yellow:#FFCC00;--eu-light:#f0f4fa;--eu-grey:#6c757d;--eu-green:#28a745;--eu-amber:#ffc107;--eu-red:#dc3545;--sidebar-w:300px}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f8f9fa;color:#212529;font-size:14px}
-a{color:var(--eu-blue)}
-.header{background:var(--eu-blue);color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.header h1{font-size:18px;font-weight:600}
-.header .meta{font-size:12px;opacity:.85;text-align:right}
-.header .meta span{display:block}
-.header button{background:var(--eu-yellow);color:var(--eu-blue);border:none;padding:6px 14px;border-radius:4px;font-weight:600;cursor:pointer;font-size:13px;margin-left:12px}
-.header button:hover{filter:brightness(1.1)}
-.wrap{display:flex;min-height:calc(100vh - 52px)}
-.sidebar{width:var(--sidebar-w);background:#fff;border-right:1px solid #dee2e6;padding:16px;flex-shrink:0;overflow-y:auto;max-height:calc(100vh - 52px);position:sticky;top:52px}
-.sidebar h3{font-size:13px;color:var(--eu-blue);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px}
-.sidebar h3:first-child{margin-top:0}
-.sidebar label{display:block;font-size:12px;color:var(--eu-grey);margin-bottom:2px}
-.sidebar input[type=text],.sidebar select{width:100%;padding:7px 10px;border:1px solid #ced4da;border-radius:4px;font-size:13px;margin-bottom:10px}
-.sidebar input:focus,.sidebar select:focus{outline:none;border-color:var(--eu-blue);box-shadow:0 0 0 2px rgba(0,51,153,.15)}
-.sidebar .clear-btn{width:100%;padding:7px;background:var(--eu-light);border:1px solid #ced4da;border-radius:4px;cursor:pointer;font-size:12px;color:var(--eu-blue);margin-top:6px}
-.sidebar .clear-btn:hover{background:#e2e8f2}
-.main{flex:1;padding:20px;overflow-x:auto;min-width:0}
-.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
-.kpi{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:center}
-.kpi .num{font-size:28px;font-weight:700;color:var(--eu-blue)}
-.kpi .lbl{font-size:12px;color:var(--eu-grey);margin-top:2px}
-.charts-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px}
-.chart-box{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.chart-box h4{font-size:13px;color:var(--eu-blue);margin-bottom:10px}
-.chart-box canvas{max-height:220px}
-.tbl-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden}
-.tbl-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #dee2e6;flex-wrap:wrap;gap:8px}
-.tbl-bar .info{font-size:13px;color:var(--eu-grey)}
-.tbl-bar .exports button{background:var(--eu-blue);color:#fff;border:none;padding:5px 12px;border-radius:4px;font-size:12px;cursor:pointer;margin-left:6px}
-.tbl-bar .exports button:hover{opacity:.9}
-table{width:100%;border-collapse:collapse}
-thead th{background:var(--eu-light);padding:10px 12px;text-align:left;font-size:12px;color:var(--eu-blue);cursor:pointer;user-select:none;white-space:nowrap;border-bottom:2px solid var(--eu-blue)}
-thead th:hover{background:#dce3f0}
-thead th .arrow{margin-left:4px;font-size:10px}
-tbody tr{border-bottom:1px solid #eee;cursor:pointer;transition:background .15s}
-tbody tr:hover{background:var(--eu-light)}
-tbody td{padding:9px 12px;font-size:13px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
-.badge-active{background:#d4edda;color:#155724}
-.badge-closed{background:#e2e3e5;color:#383d41}
-.badge-onhold{background:#fff3cd;color:#856404}
-.pager{display:flex;align-items:center;justify-content:center;padding:12px;gap:6px;border-top:1px solid #dee2e6}
-.pager button{padding:5px 11px;border:1px solid #ced4da;background:#fff;border-radius:4px;cursor:pointer;font-size:12px}
-.pager button.active{background:var(--eu-blue);color:#fff;border-color:var(--eu-blue)}
-.pager button:disabled{opacity:.4;cursor:default}
-.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none}
-.detail-overlay.open{display:flex;justify-content:flex-end}
-.detail-panel{width:min(600px,90vw);background:#fff;height:100%;overflow-y:auto;padding:24px;box-shadow:-4px 0 20px rgba(0,0,0,.15)}
-.detail-panel .close-btn{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:var(--eu-grey);padding:0 4px}
-.detail-panel .close-btn:hover{color:var(--eu-blue)}
-.detail-panel h2{font-size:17px;color:var(--eu-blue);margin-bottom:4px;padding-right:30px}
-.detail-panel .code-line{font-size:13px;color:var(--eu-grey);margin-bottom:12px}
-.detail-section{margin-bottom:18px}
-.detail-section h4{font-size:13px;color:var(--eu-blue);border-bottom:1px solid #eee;padding-bottom:4px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
-.detail-section .field{margin-bottom:6px;font-size:13px}
-.detail-section .field .fl{color:var(--eu-grey);min-width:120px;display:inline-block}
-.detail-section .mission-text{font-size:13px;line-height:1.6;white-space:pre-wrap;max-height:300px;overflow-y:auto;background:var(--eu-light);padding:10px;border-radius:4px}
-.detail-section a{word-break:break-all}
-.footer{background:#fff;border-top:1px solid #dee2e6;padding:12px 24px;font-size:11px;color:var(--eu-grey);text-align:center;line-height:1.6}
-.loading-overlay{position:fixed;inset:0;background:rgba(248,249,250,.95);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.loading-overlay.hidden{display:none}
-.loading-overlay .lds{font-size:16px;color:var(--eu-blue);font-weight:600}
-.loading-overlay .sub{font-size:13px;color:var(--eu-grey);margin-top:8px}
-@media print{.sidebar,.header button,.tbl-bar .exports,.pager,.footer{display:none}.wrap{display:block}.main{padding:10px}.detail-overlay{position:static;display:block!important;background:none}.detail-panel{width:100%;box-shadow:none;position:static}}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a1a2e}
+header{background:#003399;color:#fff;padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:1.3rem;font-weight:600}
+header .meta{font-size:.8rem;opacity:.85;text-align:right}
+.layout{display:flex;min-height:calc(100vh - 52px)}
+.sidebar{width:240px;background:#fff;padding:16px;border-right:1px solid #ddd;overflow-y:auto;flex-shrink:0}
+.sidebar h3{color:#003399;font-size:.85rem;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+.sidebar label{display:block;font-size:.75rem;color:#555;margin-bottom:2px}
+.sidebar select,.sidebar input[type=text]{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:.82rem;margin-bottom:8px}
+.sidebar button{width:100%;padding:6px;background:#e8eef7;border:1px solid #b0c4de;border-radius:4px;cursor:pointer;font-size:.78rem;color:#003399;margin-top:4px}
+.sidebar button:hover{background:#d0ddef}
+.main{flex:1;padding:16px 20px;overflow-x:hidden}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border-radius:8px;padding:16px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.kpi .number{font-size:2rem;font-weight:700;color:#003399}
+.kpi .label{font-size:.8rem;color:#666;margin-top:2px}
+.charts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.chart-box{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.chart-box h4{color:#003399;font-size:.85rem;margin-bottom:8px}
+.chart-box canvas{max-height:200px}
+/* New: country section */
+.country-section{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.country-box{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.country-box h4{color:#003399;font-size:.85rem;margin-bottom:8px}
+.country-box canvas{max-height:280px}
+/* EU Map container */
+#eu-map-container{position:relative;min-height:300px}
+#eu-map-container svg{width:100%;height:auto}
+.map-tooltip{position:absolute;background:rgba(0,51,153,.92);color:#fff;padding:6px 10px;border-radius:4px;font-size:.78rem;pointer-events:none;display:none;z-index:10}
+.map-legend{display:flex;gap:12px;margin-top:8px;font-size:.72rem;flex-wrap:wrap}
+.map-legend span{display:flex;align-items:center;gap:4px}
+.map-legend i{width:14px;height:10px;border-radius:2px;display:inline-block}
+/* Members detail panel */
+.members-panel{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:16px;display:none}
+.members-panel h4{color:#003399;font-size:.85rem;margin-bottom:8px}
+.members-panel .member-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.members-panel .cat-card{border:1px solid #e0e4ea;border-radius:6px;padding:10px}
+.members-panel .cat-card h5{font-size:.78rem;color:#003399;margin-bottom:6px}
+.members-panel .cat-card ul{list-style:none;font-size:.76rem;max-height:180px;overflow-y:auto}
+.members-panel .cat-card li{padding:2px 0;border-bottom:1px solid #f0f0f0}
+.members-panel .cat-card li:last-child{border:none}
+.member-badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:.65rem;font-weight:600}
+.member-badge.member-status{background:#e8f5e9;color:#2e7d32}
+.member-badge.observer-status{background:#fff3e0;color:#e65100}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.toolbar .info{font-size:.8rem;color:#666}
+.toolbar .actions button{padding:5px 12px;background:#003399;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:.78rem;margin-left:6px}
+.toolbar .actions button:hover{background:#002266}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);font-size:.8rem}
+thead{background:#003399;color:#fff}
+th{padding:10px 8px;text-align:left;cursor:pointer;white-space:nowrap;font-size:.75rem}
+th:hover{background:#002266}
+td{padding:8px;border-bottom:1px solid #eee;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover{background:#f5f7fb}
+tr.selected-row{background:#e3ecfa}
+.status-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:600}
+.status-active{background:#e8f5e9;color:#2e7d32}
+.status-closed{background:#fce4ec;color:#c62828}
+.status-hold{background:#fff3e0;color:#e65100}
+.countries-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
+.pagination{display:flex;justify-content:center;gap:6px;margin-top:12px}
+.pagination button{padding:4px 10px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;font-size:.78rem}
+.pagination button.active{background:#003399;color:#fff;border-color:#003399}
+.pagination button:disabled{opacity:.4;cursor:default}
+footer{text-align:center;padding:12px;font-size:.7rem;color:#888;background:#fff;border-top:1px solid #eee}
 </style>
 </head>
 <body>
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="lds">Loading Expert Groups Register...</div>
-  <div class="sub">Preparing records</div>
-</div>
-<div class="header">
+<header>
   <h1>EC Expert Groups Register</h1>
-  <div style="display:flex;align-items:center">
-    <div class="meta"><span id="metaCount"></span><span id="metaDate"></span></div>
-    <button onclick="app.refresh()" title="Reload view">&#8635; Refresh View</button>
+  <div class="meta">
+    <span id="countBadge"></span><br>
+    Data as of: <span id="genDate">__GENDATE__</span>
+    <button onclick="location.reload()" style="margin-left:10px;padding:4px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:.75rem">&#x21bb; Refresh View</button>
   </div>
-</div>
-<div class="wrap">
-  <aside class="sidebar" id="sidebar">
-    <h3>Search</h3>
-    <label for="searchInput">Free-text search</label>
-    <input type="text" id="searchInput" placeholder="Name, code or mission...">
-    <h3>Filters</h3>
-    <label for="fStatus">Status</label>
-    <select id="fStatus"><option value="">All statuses</option></select>
-    <label for="fType">Type</label>
-    <select id="fType"><option value="">All</option><option value="MAIN">Main Group</option><option value="SUBGROUP">Sub-group</option></select>
-    <label for="fDG">Lead DG</label>
-    <select id="fDG"><option value="">All DGs</option></select>
-    <label for="fPolicy">Policy Area</label>
-    <select id="fPolicy"><option value="">All policy areas</option></select>
-    <label for="fTask">Task</label>
-    <select id="fTask"><option value="">All tasks</option></select>
-    <label for="fFormal">Formal / Informal</label>
-    <select id="fFormal"><option value="">All</option><option value="Formal">Formal</option><option value="Informal">Informal</option></select>
-    <button class="clear-btn" onclick="app.clearFilters()">Clear all filters</button>
-  </aside>
-  <main class="main">
-    <div class="kpi-row" id="kpiRow"></div>
-    <div class="charts-row" id="chartsRow">
-      <div class="chart-box"><h4>By Status</h4><canvas id="chartStatus"></canvas></div>
-      <div class="chart-box"><h4>By Type</h4><canvas id="chartType"></canvas></div>
-      <div class="chart-box"><h4>Top 10 Lead DGs</h4><canvas id="chartDG"></canvas></div>
-      <div class="chart-box"><h4>Top 10 Policy Areas</h4><canvas id="chartPolicy"></canvas></div>
-    </div>
-    <div class="tbl-wrap">
-      <div class="tbl-bar">
-        <span class="info" id="tblInfo"></span>
-        <div class="exports">
-          <button onclick="app.exportCSV()">Export CSV</button>
-          <button onclick="app.exportJSON()">Export JSON</button>
-        </div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+  <h3>Search</h3>
+  <label>Free-text search</label>
+  <input type="text" id="fSearch" placeholder="Name, code or mission...">
+  <h3>Filters</h3>
+  <label>Status</label><select id="fStatus"><option value="">All statuses</option></select>
+  <label>Type</label><select id="fType"><option value="">All</option></select>
+  <label>Lead DG</label><select id="fDg"><option value="">All DGs</option></select>
+  <label>Policy Area</label><select id="fPolicy"><option value="">All policy areas</option></select>
+  <label>Task</label><select id="fTask"><option value="">All tasks</option></select>
+  <label>Formal / Informal</label><select id="fFormal"><option value="">All</option></select>
+  <label>Country</label><select id="fCountry"><option value="">All countries</option></select>
+  <button onclick="clearFilters()">Clear all filters</button>
+</aside>
+<div class="main">
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="number" id="kTotal">0</div><div class="label">Total (filtered)</div></div>
+    <div class="kpi"><div class="number" id="kActive">0</div><div class="label">Active</div></div>
+    <div class="kpi"><div class="number" id="kClosed">0</div><div class="label">Closed</div></div>
+    <div class="kpi"><div class="number" id="kMain">0</div><div class="label">Main Groups</div></div>
+  </div>
+  <!-- Original Charts Row -->
+  <div class="charts-row">
+    <div class="chart-box"><h4>By Status</h4><canvas id="chartStatus"></canvas></div>
+    <div class="chart-box"><h4>By Type</h4><canvas id="chartType"></canvas></div>
+    <div class="chart-box"><h4>Top 10 Lead DGs</h4><canvas id="chartDg"></canvas></div>
+    <div class="chart-box"><h4>Top 10 Policy Areas</h4><canvas id="chartPolicy"></canvas></div>
+  </div>
+  <!-- Country Section: Map + Bar Chart -->
+  <div class="country-section">
+    <div class="country-box">
+      <h4>Member States Participation Map</h4>
+      <div id="eu-map-container">
+        <div class="map-tooltip" id="mapTooltip"></div>
+        <canvas id="chartMap" style="display:none"></canvas>
+        <div id="mapSvgWrap"></div>
       </div>
-      <table><thead><tr id="tblHead"></tr></thead><tbody id="tblBody"></tbody></table>
-      <div class="pager" id="pager"></div>
+      <div class="map-legend" id="mapLegend"></div>
     </div>
-  </main>
+    <div class="country-box">
+      <h4>Top Countries by Group Participation</h4>
+      <canvas id="chartCountries"></canvas>
+    </div>
+  </div>
+  <!-- Members detail (shown on row click) -->
+  <div class="members-panel" id="membersPanel">
+    <h4>Members of: <span id="memberGroupTitle"></span></h4>
+    <div class="member-cats" id="memberCats"></div>
+    <button onclick="closeMembersPanel()" style="margin-top:8px;padding:4px 12px;background:#e8eef7;border:1px solid #b0c4de;border-radius:4px;cursor:pointer;font-size:.78rem;color:#003399">Close</button>
+  </div>
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <span class="info" id="tableInfo">Showing 0 groups</span>
+    <div class="actions">
+      <button onclick="exportCSV()">Export CSV</button>
+      <button onclick="exportJSON()">Export JSON</button>
+    </div>
+  </div>
+  <!-- Table -->
+  <table id="dataTable">
+    <thead><tr>
+      <th data-col="code" onclick="sortBy('code')">Code &#9650;</th>
+      <th data-col="title" onclick="sortBy('title')">Name</th>
+      <th data-col="leadDgs" onclick="sortBy('leadDgs')">Lead DG</th>
+      <th data-col="type" onclick="sortBy('type')">Type</th>
+      <th data-col="status" onclick="sortBy('status')">Status</th>
+      <th data-col="policyAreas" onclick="sortBy('policyAreas')">Policy Area</th>
+      <th data-col="countries" onclick="sortBy('countriesStr')">Countries</th>
+    </tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="pagination" id="pagination"></div>
 </div>
-<div class="detail-overlay" id="detailOverlay">
-  <div class="detail-panel" id="detailPanel"></div>
 </div>
-<footer class="footer">
-  Source: European Commission - Register of Expert Groups. Data reusable under Commission Decision 2011/833/EU.<br>
-  Ferramenta desenvolvida para a DCIRI/DSSD/SGGov - Dados gerados a partir da API da Comissao Europeia.
+<footer>
+  EC Expert Groups Register Dashboard &mdash; Data: European Commission &mdash; Licence: Decision 2011/833/EU &mdash; DCIRI/DSSD/SGGov
 </footer>
+
 <script>
-'use strict';
+// ─── DATA ───
 const DATA = '__DATA_PLACEHOLDER__';
 const REF  = '__REF_PLACEHOLDER__';
-const GEN_DATE = '__GENDATE__';
-class App {
-  constructor(){this.allData=DATA;this.ref=REF;this.filtered=[];this.page=0;this.pageSize=50;this.sortCol='code';this.sortAsc=true;this.charts={};this.columns=[{key:'code',label:'Code'},{key:'title',label:'Name'},{key:'leadDgs',label:'Lead DG'},{key:'type',label:'Type'},{key:'status',label:'Status'},{key:'policyAreas',label:'Policy Area'}];}
-  init(){document.getElementById('metaCount').textContent=this.allData.length+' groups loaded';document.getElementById('metaDate').textContent='Data as of: '+GEN_DATE;this.populateFilters();this.buildTableHead();this.applyFilters();this.bindEvents();document.getElementById('loadingOverlay').classList.add('hidden');}
-  populateFilters(){const fill=(id,items,vk,lk)=>{const sel=document.getElementById(id);(items||[]).forEach(it=>{const o=document.createElement('option');o.value=it[vk||'code'];o.textContent=it[lk||'label'];sel.appendChild(o);});};fill('fStatus',this.ref.statuses,'code','label');fill('fDG',this.ref.dgs,'code','label');fill('fPolicy',this.ref.policyAreas,'code','label');fill('fTask',this.ref.tasks,'code','label');}
-  bindEvents(){let db;document.getElementById('searchInput').addEventListener('input',()=>{clearTimeout(db);db=setTimeout(()=>this.applyFilters(),150);});['fStatus','fType','fDG','fPolicy','fTask','fFormal'].forEach(id=>{document.getElementById(id).addEventListener('change',()=>this.applyFilters());});document.addEventListener('keydown',e=>{if(e.key==='Escape')this.closeDetail();});}
-  applyFilters(){const q=document.getElementById('searchInput').value.toLowerCase().trim();const st=document.getElementById('fStatus').value;const tp=document.getElementById('fType').value;const dg=document.getElementById('fDG').value;const pa=document.getElementById('fPolicy').value;const tk=document.getElementById('fTask').value;const fm=document.getElementById('fFormal').value;this.filtered=this.allData.filter(r=>{if(q&&!(r.code.toLowerCase().includes(q)||r.title.toLowerCase().includes(q)||(r.mission||'').toLowerCase().includes(q)))return false;if(st&&r.statusCode!==st)return false;if(tp&&r.type!==tp)return false;if(dg&&!r.leadDgs.includes(dg))return false;if(pa&&!r.policyAreas.includes(pa))return false;if(tk&&!r.tasks.includes(tk))return false;if(fm&&!r.types.includes(fm))return false;return true;});this.page=0;this.sortData();this.renderKPIs();this.renderCharts();this.renderTable();}
-  clearFilters(){document.getElementById('searchInput').value='';['fStatus','fType','fDG','fPolicy','fTask','fFormal'].forEach(id=>{document.getElementById(id).value='';});this.applyFilters();}
-  sortData(){const k=this.sortCol;const d=this.sortAsc?1:-1;this.filtered.sort((a,b)=>{const va=(a[k]||'').toString().toLowerCase();const vb=(b[k]||'').toString().toLowerCase();return va<vb?-d:va>vb?d:0;});}
-  buildTableHead(){const tr=document.getElementById('tblHead');tr.innerHTML='';this.columns.forEach(c=>{const th=document.createElement('th');th.textContent=c.label;th.onclick=()=>{if(this.sortCol===c.key)this.sortAsc=!this.sortAsc;else{this.sortCol=c.key;this.sortAsc=true;}this.sortData();this.renderTable();this.updateSortArrows();};const arrow=document.createElement('span');arrow.className='arrow';th.appendChild(arrow);tr.appendChild(th);});this.updateSortArrows();}
-  updateSortArrows(){const ths=document.querySelectorAll('#tblHead th');ths.forEach((th,i)=>{const arrow=th.querySelector('.arrow');if(this.columns[i].key===this.sortCol){arrow.textContent=this.sortAsc?' \u25B2':' \u25BC';}else{arrow.textContent='';}});}
-  renderKPIs(){const d=this.filtered;const active=d.filter(r=>r.statusCode==='ACTIVE').length;const closed=d.filter(r=>r.statusCode==='DISABLED').length;const main=d.filter(r=>r.type==='MAIN').length;const kpis=[{num:d.length,lbl:'Total (filtered)'},{num:active,lbl:'Active'},{num:closed,lbl:'Closed'},{num:main,lbl:'Main Groups'}];document.getElementById('kpiRow').innerHTML=kpis.map(k=>'<div class="kpi"><div class="num">'+k.num+'</div><div class="lbl">'+k.lbl+'</div></div>').join('');}
-  renderCharts(){if(typeof Chart==='undefined')return;this._doughnut('chartStatus',this._count('status'),['#28a745','#6c757d','#ffc107','#dc3545']);this._doughnut('chartType',this._count('type'),['#003399','#66a3ff']);this._bar('chartDG',this._topN('leadDgs',10));this._bar('chartPolicy',this._topN('policyAreas',10));}
-  _count(key){const m={};this.filtered.forEach(r=>{const v=r[key]||'Unknown';m[v]=(m[v]||0)+1;});return m;}
-  _topN(key,n){const m={};this.filtered.forEach(r=>{(r[key]||'').split(', ').filter(Boolean).forEach(v=>{m[v]=(m[v]||0)+1;});});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n).reduce((o,[k,v])=>{o[k]=v;return o;},{});}
-  _doughnut(id,data,colors){if(this.charts[id])this.charts[id].destroy();const ctx=document.getElementById(id);if(!ctx)return;this.charts[id]=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(data),datasets:[{data:Object.values(data),backgroundColor:colors}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});}
-  _bar(id,data){if(this.charts[id])this.charts[id].destroy();const ctx=document.getElementById(id);if(!ctx)return;this.charts[id]=new Chart(ctx,{type:'bar',data:{labels:Object.keys(data),datasets:[{data:Object.values(data),backgroundColor:'#003399'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:11}}},y:{ticks:{font:{size:10}}}}}});}
-  renderTable(){const start=this.page*this.pageSize;const slice=this.filtered.slice(start,start+this.pageSize);const tbody=document.getElementById('tblBody');tbody.innerHTML='';slice.forEach(r=>{const tr=document.createElement('tr');tr.onclick=()=>this.showDetail(r);this.columns.forEach(c=>{const td=document.createElement('td');if(c.key==='status'){const cls=r.statusCode==='ACTIVE'?'badge-active':r.statusCode==='DISABLED'?'badge-closed':'badge-onhold';td.innerHTML='<span class="badge '+cls+'">'+this._esc(r[c.key])+'</span>';}else{td.textContent=r[c.key]||'';td.title=r[c.key]||'';}tr.appendChild(td);});tbody.appendChild(tr);});document.getElementById('tblInfo').textContent='Showing '+(this.filtered.length?start+1:0)+'\u2013'+Math.min(start+this.pageSize,this.filtered.length)+' of '+this.filtered.length+' groups (from '+this.allData.length+' total)';this.renderPager();}
-  renderPager(){const tp=Math.ceil(this.filtered.length/this.pageSize);const pager=document.getElementById('pager');pager.innerHTML='';if(tp<=1)return;const mk=(l,pg,dis,act)=>{const b=document.createElement('button');b.textContent=l;b.disabled=dis;if(act)b.className='active';b.onclick=()=>{this.page=pg;this.renderTable();};pager.appendChild(b);};mk('\u00AB',0,this.page===0);mk('\u2039',this.page-1,this.page===0);let s=Math.max(0,this.page-3);let e=Math.min(tp,s+7);if(e-s<7)s=Math.max(0,e-7);for(let i=s;i<e;i++){mk(i+1,i,false,i===this.page);}mk('\u203A',this.page+1,this.page>=tp-1);mk('\u00BB',tp-1,this.page>=tp-1);}
-  showDetail(r){const p=document.getElementById('detailPanel');const bc=r.statusCode==='ACTIVE'?'badge-active':r.statusCode==='DISABLED'?'badge-closed':'badge-onhold';let h='<button class="close-btn" onclick="app.closeDetail()">&times;</button>';h+='<h2>'+this._esc(r.title)+'</h2>';h+='<div class="code-line">'+this._esc(r.code)+' &nbsp; <span class="badge '+bc+'">'+this._esc(r.status)+'</span></div>';h+='<div class="detail-section"><h4>Overview</h4>';const f1=[['Type',r.type],['Classification',r.types],['Scope',r.scope],['Abbreviation',r.abbr],['Lead DG(s)',r.leadDgs],['Associated DG(s)',r.assocDgs],['Policy Area(s)',r.policyAreas],['Other Policy Area',r.policyOther],['Task(s)',r.tasks]];f1.forEach(([l,v])=>{if(v)h+='<div class="field"><span class="fl">'+l+':</span> '+this._esc(v)+'</div>';});h+='</div>';if(r.mission){h+='<div class="detail-section"><h4>Mission</h4><div class="mission-text">'+this._esc(r.mission)+'</div></div>';}h+='<div class="detail-section"><h4>Dates &amp; Legal Basis</h4>';const f2=[['Published',r.pubDate],['Last Updated',r.updDate],['Creating Act',r.createAct]];f2.forEach(([l,v])=>{if(v)h+='<div class="field"><span class="fl">'+l+':</span> '+this._esc(v)+'</div>';});if(r.torLink)h+='<div class="field"><span class="fl">Terms of Ref.:</span> <a href="'+this._esc(r.torLink)+'" target="_blank">View</a></div>';h+='</div>';if(r.contact){h+='<div class="detail-section"><h4>Contact</h4><div class="field">'+this._esc(r.contact)+'</div></div>';}if(r.parentCode){h+='<div class="detail-section"><h4>Parent Group</h4><div class="field">'+this._esc(r.parentCode)+' &mdash; '+this._esc(r.parentTitle)+'</div></div>';}p.innerHTML=h;document.getElementById('detailOverlay').classList.add('open');}
-  closeDetail(){document.getElementById('detailOverlay').classList.remove('open');}
-  _esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-  exportCSV(){const hdr=this.columns.map(c=>c.label).join(',');const rows=this.filtered.map(r=>this.columns.map(c=>'"'+(r[c.key]||'').toString().replace(/"/g,'""')+'"').join(','));const csv=hdr+'\n'+rows.join('\n');this._dl(csv,'expert_groups_export_'+new Date().toISOString().slice(0,10)+'.csv','text/csv');}
-  exportJSON(){const j=JSON.stringify(this.filtered,null,2);this._dl(j,'expert_groups_export_'+new Date().toISOString().slice(0,10)+'.json','application/json');}
-  _dl(content,filename,mime){const blob=new Blob([content],{type:mime+';charset=utf-8'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(u),5000);}
-  refresh(){this.applyFilters();}
+
+// ─── EU COUNTRY ISO MAP ───
+const COUNTRY_ISO = {
+  "Austria":"AT","Belgium":"BE","Bulgaria":"BG","Croatia":"HR","Cyprus":"CY",
+  "Czech Republic":"CZ","Czechia":"CZ","Denmark":"DK","Estonia":"EE","Finland":"FI",
+  "France":"FR","Germany":"DE","Greece":"GR","Hungary":"HU","Ireland":"IE",
+  "Italy":"IT","Latvia":"LV","Lithuania":"LT","Luxembourg":"LU","Malta":"MT",
+  "Netherlands":"NL","Poland":"PL","Portugal":"PT","Romania":"RO","Slovakia":"SK",
+  "Slovenia":"SI","Spain":"ES","Sweden":"SE",
+  // EEA / candidate
+  "Norway":"NO","Iceland":"IS","Liechtenstein":"LI","Switzerland":"CH",
+  "Albania":"AL","Bosnia and Herzegovina":"BA","Georgia":"GE","Moldova":"MD",
+  "Montenegro":"ME","North Macedonia":"MK","Serbia":"RS","Ukraine":"UA","Kosovo":"XK",
+  "Turkey":"TR","United Kingdom":"GB"
+};
+
+// ─── STATE ───
+let allData = DATA;
+let filtered = [];
+let sortCol = 'code', sortDir = 1;
+let page = 0;
+const PAGE_SZ = 50;
+let charts = {};
+let selectedRow = null;
+
+// ─── EU MAP SVG PATHS (simplified) ───
+const EU_PATHS = {
+  AT:"M491,282 L500,278 510,282 512,290 505,294 495,292Z",
+  BE:"M443,248 L450,244 458,248 456,256 448,256Z",
+  BG:"M560,310 L580,306 590,315 585,325 565,322Z",
+  HR:"M510,300 L525,295 530,305 520,315 505,310Z",
+  CY:"M590,365 L600,362 605,368 598,372Z",
+  CZ:"M495,265 L510,260 518,268 510,276 498,273Z",
+  DK:"M470,215 L478,208 485,215 480,225 472,222Z",
+  EE:"M545,185 L555,180 560,188 552,194Z",
+  FI:"M540,140 L555,130 565,145 555,170 540,165Z",
+  FR:"M415,280 L440,260 460,270 455,300 430,310 410,295Z",
+  DE:"M465,240 L490,230 500,250 495,275 470,270Z",
+  GR:"M545,340 L560,330 568,345 555,360 540,350Z",
+  HU:"M520,285 L540,280 545,292 535,300 518,296Z",
+  IE:"M390,230 L405,225 408,238 398,242Z",
+  IT:"M480,310 L495,300 505,320 498,350 485,340 478,325Z",
+  LV:"M540,195 L555,192 558,202 548,206Z",
+  LT:"M535,205 L550,202 554,214 540,216Z",
+  LU:"M450,258 L455,255 458,260 452,262Z",
+  MT:"M490,375 L495,372 498,376 493,378Z",
+  NL:"M448,235 L458,230 462,240 454,244Z",
+  PL:"M510,240 L535,235 545,255 535,270 512,265Z",
+  PT:"M390,315 L400,308 404,325 395,335Z",
+  RO:"M545,290 L570,285 578,300 565,310 542,305Z",
+  SK:"M520,272 L538,268 542,278 528,282Z",
+  SI:"M502,295 L512,291 515,298 506,301Z",
+  ES:"M395,310 L430,300 440,320 425,340 395,335Z",
+  SE:"M495,155 L505,140 515,160 510,200 498,195Z",
+  // Non-EU
+  NO:"M475,130 L490,115 500,135 495,175 480,170Z",
+  GB:"M400,210 L420,200 425,225 415,240 395,235Z",
+  IS:"M350,140 L370,135 375,148 355,150Z",
+  CH:"M465,285 L475,280 480,288 472,292Z",
+  RS:"M535,305 L550,300 555,312 542,318Z",
+  AL:"M535,330 L543,325 548,335 540,340Z",
+  ME:"M528,318 L536,314 540,322 532,326Z",
+  MK:"M545,325 L558,320 562,330 550,334Z",
+  BA:"M515,305 L528,300 532,312 518,316Z",
+  UA:"M570,240 L605,230 615,260 595,275 565,265Z",
+  MD:"M575,270 L585,265 588,278 578,280Z",
+  GE:"M620,280 L640,275 645,285 630,290Z",
+  TR:"M580,340 L620,330 640,345 615,355 585,350Z",
+  XK:"M535,318 L545,314 548,322 538,326Z"
+};
+
+// ─── INIT ───
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('countBadge').textContent = allData.length + ' groups loaded';
+  populateFilters();
+  applyFilters();
+  buildCharts();
+  // listeners
+  document.getElementById('fSearch').addEventListener('input', () => { page = 0; applyFilters(); });
+  ['fStatus','fType','fDg','fPolicy','fTask','fFormal','fCountry'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => { page = 0; applyFilters(); });
+  });
+});
+
+function populateFilters() {
+  const statuses = [...new Set(allData.map(d=>d.status))].filter(Boolean).sort();
+  const types = [...new Set(allData.map(d=>d.type))].filter(Boolean).sort();
+  const dgs = [...new Set(allData.flatMap(d=>(d.leadDgs||'').split(', ')))].filter(Boolean).sort();
+  const policies = [...new Set(allData.flatMap(d=>(d.policyAreas||'').split(', ')))].filter(Boolean).sort();
+  const tasks = [...new Set(allData.flatMap(d=>(d.tasks||'').split(', ')))].filter(Boolean).sort();
+  const formals = [...new Set(allData.flatMap(d=>(d.types||'').split(', ')))].filter(Boolean).sort();
+  // Collect all countries from data
+  const countries = [...new Set(allData.flatMap(d=>d.countries||[]))].filter(Boolean).sort();
+
+  const fill = (id, arr) => { const s = document.getElementById(id); arr.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; s.appendChild(o); }); };
+  fill('fStatus', statuses); fill('fType', types); fill('fDg', dgs);
+  fill('fPolicy', policies); fill('fTask', tasks); fill('fFormal', formals);
+  fill('fCountry', countries);
 }
-const app=new App();
-document.addEventListener('DOMContentLoaded',()=>app.init());
+
+function clearFilters() {
+  document.getElementById('fSearch').value = '';
+  ['fStatus','fType','fDg','fPolicy','fTask','fFormal','fCountry'].forEach(id => document.getElementById(id).value = '');
+  page = 0; applyFilters();
+}
+
+function applyFilters() {
+  const q = document.getElementById('fSearch').value.toLowerCase();
+  const fs = document.getElementById('fStatus').value;
+  const ft = document.getElementById('fType').value;
+  const fd = document.getElementById('fDg').value;
+  const fp = document.getElementById('fPolicy').value;
+  const fk = document.getElementById('fTask').value;
+  const ff = document.getElementById('fFormal').value;
+  const fc = document.getElementById('fCountry').value;
+
+  filtered = allData.filter(d => {
+    if (q && !(d.code+' '+d.title+' '+d.mission).toLowerCase().includes(q)) return false;
+    if (fs && d.status !== fs) return false;
+    if (ft && d.type !== ft) return false;
+    if (fd && !(d.leadDgs||'').includes(fd)) return false;
+    if (fp && !(d.policyAreas||'').includes(fp)) return false;
+    if (fk && !(d.tasks||'').includes(fk)) return false;
+    if (ff && !(d.types||'').includes(ff)) return false;
+    if (fc && !(d.countries||[]).includes(fc)) return false;
+    return true;
+  });
+
+  sortData();
+  renderTable();
+  updateKPIs();
+  updateCharts();
+  updateCountryCharts();
+  closeMembersPanel();
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+  sortData(); renderTable();
+}
+
+function sortData() {
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (sortCol === 'countriesStr') {
+      va = (a.countries||[]).join(', '); vb = (b.countries||[]).join(', ');
+    } else {
+      va = a[sortCol] || ''; vb = b[sortCol] || '';
+    }
+    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  });
+}
+
+function updateKPIs() {
+  document.getElementById('kTotal').textContent = filtered.length;
+  document.getElementById('kActive').textContent = filtered.filter(d => d.statusCode === 'ACTIVE').length;
+  document.getElementById('kClosed').textContent = filtered.filter(d => d.statusCode === 'DISABLED').length;
+  document.getElementById('kMain').textContent = filtered.filter(d => d.type === 'MAIN').length;
+}
+
+function renderTable() {
+  const start = page * PAGE_SZ;
+  const slice = filtered.slice(start, start + PAGE_SZ);
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  slice.forEach(d => {
+    const tr = document.createElement('tr');
+    const sc = d.statusCode === 'ACTIVE' ? 'status-active' : d.statusCode === 'DISABLED' ? 'status-closed' : 'status-hold';
+    const countriesStr = (d.countries||[]).join(', ') || '—';
+    tr.innerHTML = `<td>${d.code}</td><td title="${esc(d.title)}">${esc(d.title)}</td><td>${esc(d.leadDgs)}</td><td>${d.type}</td><td><span class="status-badge ${sc}">${esc(d.status)}</span></td><td title="${esc(d.policyAreas)}">${esc(d.policyAreas)}</td><td class="countries-cell" title="${esc(countriesStr)}">${esc(countriesStr)}</td>`;
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', () => showMembers(d, tr));
+    tbody.appendChild(tr);
+  });
+  document.getElementById('tableInfo').textContent = `Showing ${start+1}\u2013${Math.min(start+PAGE_SZ, filtered.length)} of ${filtered.length} groups (from ${allData.length} total)`;
+  renderPagination();
+}
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderPagination() {
+  const totalPages = Math.ceil(filtered.length / PAGE_SZ);
+  const div = document.getElementById('pagination');
+  div.innerHTML = '';
+  if (totalPages <= 1) return;
+  const addBtn = (label, p, disabled = false) => { const b = document.createElement('button'); b.textContent = label; b.disabled = disabled; if (p === page) b.className = 'active'; b.onclick = () => { page = p; renderTable(); }; div.appendChild(b); };
+  addBtn('«', 0, page === 0);
+  addBtn('‹', Math.max(0, page - 1), page === 0);
+  let start = Math.max(0, page - 3), end = Math.min(totalPages - 1, page + 3);
+  for (let i = start; i <= end; i++) addBtn(i + 1, i);
+  addBtn('›', Math.min(totalPages - 1, page + 1), page >= totalPages - 1);
+  addBtn('»', totalPages - 1, page >= totalPages - 1);
+}
+
+// ─── MEMBERS PANEL ───
+function showMembers(d, tr) {
+  if (selectedRow) selectedRow.classList.remove('selected-row');
+  tr.classList.add('selected-row');
+  selectedRow = tr;
+
+  const panel = document.getElementById('membersPanel');
+  document.getElementById('memberGroupTitle').textContent = d.code + ' — ' + d.title;
+  const container = document.getElementById('memberCats');
+  container.innerHTML = '';
+
+  const catLabels = {
+    '1': 'Type A — Individual experts',
+    '2': 'Type B — Representatives of interest',
+    '3': 'Type C — Organisations',
+    '4': 'Type D — Member State authorities',
+    '5': 'Type E — Other public entities'
+  };
+
+  const members = d.members || {};
+  let hasAny = false;
+
+  for (let cat = 1; cat <= 5; cat++) {
+    const mlist = members[String(cat)] || [];
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    const statusBadge = (s) => s === 'Member' ? '<span class="member-badge member-status">Member</span>' : '<span class="member-badge observer-status">' + esc(s) + '</span>';
+
+    let items = '';
+    mlist.forEach(m => {
+      if (cat === 4) {
+        items += `<li>${esc(m.country)} ${statusBadge(m.status)}${m.paCount > 0 ? ' <small>('+m.paCount+' auth.)</small>' : ''}</li>`;
+      } else if (cat === 3 || cat === 5) {
+        const areas = (m.areas||[]).join(', ');
+        items += `<li>${esc(m.name)} ${statusBadge(m.status)}${areas ? '<br><small>Areas: '+esc(areas)+'</small>' : ''}</li>`;
+      } else {
+        items += `<li>${esc(m.name||'(unnamed)')} ${statusBadge(m.status)}</li>`;
+      }
+    });
+
+    if (mlist.length > 0) hasAny = true;
+    card.innerHTML = `<h5>${catLabels[String(cat)]} (${mlist.length})</h5><ul>${items || '<li style="color:#999">No members</li>'}</ul>`;
+    container.appendChild(card);
+  }
+
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeMembersPanel() {
+  document.getElementById('membersPanel').style.display = 'none';
+  if (selectedRow) { selectedRow.classList.remove('selected-row'); selectedRow = null; }
+}
+
+// ─── CHARTS ───
+function buildCharts() {
+  const ctx = (id) => document.getElementById(id).getContext('2d');
+  charts.status = new Chart(ctx('chartStatus'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#27ae60','#2c3e50','#f39c12']}]}, options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}} });
+  charts.type = new Chart(ctx('chartType'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#003399','#70a1ff']}]}, options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}} });
+  charts.dg = new Chart(ctx('chartDg'), { type:'bar', data:{labels:[],datasets:[{data:[],backgroundColor:'#003399'}]}, options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}} });
+  charts.policy = new Chart(ctx('chartPolicy'), { type:'bar', data:{labels:[],datasets:[{data:[],backgroundColor:'#FFCC00'}]}, options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}} });
+  // Country bar chart
+  charts.countries = new Chart(ctx('chartCountries'), { type:'bar', data:{labels:[],datasets:[{label:'Groups',data:[],backgroundColor:'#003399'}]}, options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}} });
+  updateCharts();
+  updateCountryCharts();
+  buildEUMap();
+}
+
+function updateCharts() {
+  // Status
+  const sc = {}; filtered.forEach(d => { sc[d.status] = (sc[d.status]||0)+1; });
+  charts.status.data.labels = Object.keys(sc); charts.status.data.datasets[0].data = Object.values(sc); charts.status.update();
+  // Type
+  const tc = {}; filtered.forEach(d => { tc[d.type] = (tc[d.type]||0)+1; });
+  charts.type.data.labels = Object.keys(tc); charts.type.data.datasets[0].data = Object.values(tc); charts.type.update();
+  // DGs
+  const dc = {}; filtered.forEach(d => { (d.leadDgs||'').split(', ').filter(Boolean).forEach(v => dc[v]=(dc[v]||0)+1); });
+  const dSorted = Object.entries(dc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  charts.dg.data.labels = dSorted.map(x=>x[0]); charts.dg.data.datasets[0].data = dSorted.map(x=>x[1]); charts.dg.update();
+  // Policy
+  const pc = {}; filtered.forEach(d => { (d.policyAreas||'').split(', ').filter(Boolean).forEach(v => pc[v]=(pc[v]||0)+1); });
+  const pSorted = Object.entries(pc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  charts.policy.data.labels = pSorted.map(x=>x[0]); charts.policy.data.datasets[0].data = pSorted.map(x=>x[1]); charts.policy.update();
+}
+
+function updateCountryCharts() {
+  // Count countries across filtered data
+  const cc = {};
+  filtered.forEach(d => {
+    (d.countries||[]).forEach(c => { cc[c] = (cc[c]||0)+1; });
+  });
+  const sorted = Object.entries(cc).sort((a,b)=>b[1]-a[1]);
+  const top20 = sorted.slice(0, 20);
+
+  // Update bar chart
+  charts.countries.data.labels = top20.map(x=>x[0]);
+  charts.countries.data.datasets[0].data = top20.map(x=>x[1]);
+  charts.countries.update();
+
+  // Update map colors
+  updateMapColors(cc);
+}
+
+// ─── EU MAP ───
+function buildEUMap() {
+  const wrap = document.getElementById('mapSvgWrap');
+  const tooltip = document.getElementById('mapTooltip');
+
+  let svg = '<svg viewBox="330 100 340 300" xmlns="http://www.w3.org/2000/svg">';
+  for (const [iso, path] of Object.entries(EU_PATHS)) {
+    svg += `<path id="map-${iso}" d="${path}" fill="#d4dff0" stroke="#fff" stroke-width="1" data-iso="${iso}" style="cursor:pointer;transition:fill .2s"/>`;
+  }
+  svg += '</svg>';
+  wrap.innerHTML = svg;
+
+  // Add hover events
+  wrap.querySelectorAll('path').forEach(p => {
+    p.addEventListener('mouseenter', (e) => {
+      const iso = p.dataset.iso;
+      const name = Object.keys(COUNTRY_ISO).find(k => COUNTRY_ISO[k] === iso) || iso;
+      const count = p.dataset.count || 0;
+      tooltip.innerHTML = `<strong>${name}</strong><br>${count} groups`;
+      tooltip.style.display = 'block';
+    });
+    p.addEventListener('mousemove', (e) => {
+      const rect = wrap.getBoundingClientRect();
+      tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+      tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
+    });
+    p.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    p.addEventListener('click', () => {
+      const iso = p.dataset.iso;
+      const name = Object.keys(COUNTRY_ISO).find(k => COUNTRY_ISO[k] === iso) || iso;
+      document.getElementById('fCountry').value = name;
+      page = 0; applyFilters();
+    });
+  });
+
+  // Build legend
+  const legend = document.getElementById('mapLegend');
+  const buckets = [
+    {color:'#d4dff0', label:'0'},
+    {color:'#a8c4e0', label:'1-50'},
+    {color:'#6a9fd8', label:'51-150'},
+    {color:'#003399', label:'151-300'},
+    {color:'#001a4d', label:'300+'}
+  ];
+  legend.innerHTML = buckets.map(b => `<span><i style="background:${b.color}"></i>${b.label}</span>`).join('');
+}
+
+function updateMapColors(countryCount) {
+  for (const [name, iso] of Object.entries(COUNTRY_ISO)) {
+    const el = document.getElementById('map-' + iso);
+    if (!el) continue;
+    const count = countryCount[name] || 0;
+    el.dataset.count = count;
+    let color;
+    if (count === 0) color = '#d4dff0';
+    else if (count <= 50) color = '#a8c4e0';
+    else if (count <= 150) color = '#6a9fd8';
+    else if (count <= 300) color = '#003399';
+    else color = '#001a4d';
+    el.style.fill = color;
+  }
+}
+
+// ─── EXPORTS ───
+function exportCSV() {
+  const headers = ['Code','Title','Status','Type','Lead DGs','Policy Areas','Countries','Types','Scope','Tasks','Parent Code','Publication Date','Update Date'];
+  const rows = filtered.map(d => [d.code,d.title,d.status,d.type,d.leadDgs,d.policyAreas,(d.countries||[]).join('; '),d.types,d.scope,d.tasks,d.parentCode,d.pubDate,d.updDate].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(','));
+  download('expert_groups.csv', 'text/csv;charset=utf-8', '\uFEFF' + headers.join(',') + '\n' + rows.join('\n'));
+}
+function exportJSON() { download('expert_groups.json', 'application/json', JSON.stringify(filtered, null, 2)); }
+function download(name, type, content) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content],{type})); a.download = name; a.click(); }
 </script>
 </body>
 </html>
