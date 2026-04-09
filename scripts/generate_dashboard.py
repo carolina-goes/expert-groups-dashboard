@@ -83,10 +83,10 @@ def fetch_all_details(ids):
 
 def compact_record(r):
     def labels(arr):
-        return ", ".join(x.get("label", x.get("code", "")) for x in (arr or []))
-    status_obj = r.get("status") or {}
-    main_group = r.get("mainGroup") or {}
-    type_labels = [t.get("label", "") for t in (r.get("types") or [])]
+        return ", ".join(x.get("label", x.get("code", "")) for x in (arr or []) if isinstance(x, dict))
+    status_obj = r.get("status") if isinstance(r.get("status"), dict) else {}
+    main_group = r.get("mainGroup") if isinstance(r.get("mainGroup"), dict) else {}
+    type_labels = [t.get("label", "") for t in (r.get("types") or []) if isinstance(t, dict)]
     return {
         "code": (r.get("codeGroup") or "").strip(),
         "title": r.get("title") or "",
