@@ -27,19 +27,16 @@ header .meta{font-size:.8rem;opacity:.85;text-align:right}
 .chart-box{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .chart-box h4{color:#003399;font-size:.85rem;margin-bottom:8px}
 .chart-box canvas{max-height:200px}
-/* New: country section */
 .country-section{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .country-box{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .country-box h4{color:#003399;font-size:.85rem;margin-bottom:8px}
 .country-box canvas{max-height:280px}
-/* EU Map container */
 #eu-map-container{position:relative;min-height:300px}
 #eu-map-container svg{width:100%;height:auto}
 .map-tooltip{position:absolute;background:rgba(0,51,153,.92);color:#fff;padding:6px 10px;border-radius:4px;font-size:.78rem;pointer-events:none;display:none;z-index:10}
 .map-legend{display:flex;gap:12px;margin-top:8px;font-size:.72rem;flex-wrap:wrap}
 .map-legend span{display:flex;align-items:center;gap:4px}
 .map-legend i{width:14px;height:10px;border-radius:2px;display:inline-block}
-/* Members detail panel */
 .members-panel{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:16px;display:none}
 .members-panel h4{color:#003399;font-size:.85rem;margin-bottom:8px}
 .members-panel .member-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
@@ -99,21 +96,18 @@ footer{text-align:center;padding:12px;font-size:.7rem;color:#888;background:#fff
   <button onclick="clearFilters()">Clear all filters</button>
 </aside>
 <div class="main">
-  <!-- KPIs -->
   <div class="kpi-row">
     <div class="kpi"><div class="number" id="kTotal">0</div><div class="label">Total (filtered)</div></div>
     <div class="kpi"><div class="number" id="kActive">0</div><div class="label">Active</div></div>
     <div class="kpi"><div class="number" id="kClosed">0</div><div class="label">Closed</div></div>
     <div class="kpi"><div class="number" id="kMain">0</div><div class="label">Main Groups</div></div>
   </div>
-  <!-- Original Charts Row -->
   <div class="charts-row">
     <div class="chart-box"><h4>By Status</h4><canvas id="chartStatus"></canvas></div>
     <div class="chart-box"><h4>By Type</h4><canvas id="chartType"></canvas></div>
     <div class="chart-box"><h4>Top 10 Lead DGs</h4><canvas id="chartDg"></canvas></div>
     <div class="chart-box"><h4>Top 10 Policy Areas</h4><canvas id="chartPolicy"></canvas></div>
   </div>
-  <!-- Country Section: Map + Bar Chart -->
   <div class="country-section">
     <div class="country-box">
       <h4>Member States Participation Map</h4>
@@ -129,13 +123,11 @@ footer{text-align:center;padding:12px;font-size:.7rem;color:#888;background:#fff
       <canvas id="chartCountries"></canvas>
     </div>
   </div>
-  <!-- Members detail (shown on row click) -->
   <div class="members-panel" id="membersPanel">
     <h4>Members of: <span id="memberGroupTitle"></span></h4>
     <div class="member-cats" id="memberCats"></div>
     <button onclick="closeMembersPanel()" style="margin-top:8px;padding:4px 12px;background:#e8eef7;border:1px solid #b0c4de;border-radius:4px;cursor:pointer;font-size:.78rem;color:#003399">Close</button>
   </div>
-  <!-- Toolbar -->
   <div class="toolbar">
     <span class="info" id="tableInfo">Showing 0 groups</span>
     <div class="actions">
@@ -143,7 +135,6 @@ footer{text-align:center;padding:12px;font-size:.7rem;color:#888;background:#fff
       <button onclick="exportJSON()">Export JSON</button>
     </div>
   </div>
-  <!-- Table -->
   <table id="dataTable">
     <thead><tr>
       <th data-col="code" onclick="sortBy('code')">Code &#9650;</th>
@@ -164,11 +155,15 @@ footer{text-align:center;padding:12px;font-size:.7rem;color:#888;background:#fff
 </footer>
 
 <script>
-// ─── DATA ───
+/* ═══════════════════════════════════════════════════════════
+   EC Expert Groups Dashboard — JavaScript
+   ═══════════════════════════════════════════════════════════ */
+
+// ─── DATA (replaced by generate_dashboard.py) ───
 const DATA = '__DATA_PLACEHOLDER__';
 const REF  = '__REF_PLACEHOLDER__';
 
-// ─── EU COUNTRY ISO MAP ───
+// ─── COUNTRY ISO MAP ───
 const COUNTRY_ISO = {
   "Austria":"AT","Belgium":"BE","Bulgaria":"BG","Croatia":"HR","Cyprus":"CY",
   "Czech Republic":"CZ","Czechia":"CZ","Denmark":"DK","Estonia":"EE","Finland":"FI",
@@ -176,23 +171,13 @@ const COUNTRY_ISO = {
   "Italy":"IT","Latvia":"LV","Lithuania":"LT","Luxembourg":"LU","Malta":"MT",
   "Netherlands":"NL","Poland":"PL","Portugal":"PT","Romania":"RO","Slovakia":"SK",
   "Slovenia":"SI","Spain":"ES","Sweden":"SE",
-  // EEA / candidate
   "Norway":"NO","Iceland":"IS","Liechtenstein":"LI","Switzerland":"CH",
   "Albania":"AL","Bosnia and Herzegovina":"BA","Georgia":"GE","Moldova":"MD",
   "Montenegro":"ME","North Macedonia":"MK","Serbia":"RS","Ukraine":"UA","Kosovo":"XK",
   "Turkey":"TR","United Kingdom":"GB"
 };
 
-// ─── STATE ───
-let allData = DATA;
-let filtered = [];
-let sortCol = 'code', sortDir = 1;
-let page = 0;
-const PAGE_SZ = 50;
-let charts = {};
-let selectedRow = null;
-
-// ─── EU MAP SVG PATHS (simplified) ───
+// ─── EU MAP SVG PATHS ───
 const EU_PATHS = {
   AT:"M491,282 L500,278 510,282 512,290 505,294 495,292Z",
   BE:"M443,248 L450,244 458,248 456,256 448,256Z",
@@ -221,7 +206,6 @@ const EU_PATHS = {
   SI:"M502,295 L512,291 515,298 506,301Z",
   ES:"M395,310 L430,300 440,320 425,340 395,335Z",
   SE:"M495,155 L505,140 515,160 510,200 498,195Z",
-  // Non-EU
   NO:"M475,130 L490,115 500,135 495,175 480,170Z",
   GB:"M400,210 L420,200 425,225 415,240 395,235Z",
   IS:"M350,140 L370,135 375,148 355,150Z",
@@ -238,79 +222,137 @@ const EU_PATHS = {
   XK:"M535,318 L545,314 548,322 538,326Z"
 };
 
+// ─── STATE ───
+let allData = DATA;
+let filtered = [];
+let sortCol = 'code', sortDir = 1;
+let page = 0;
+const PAGE_SZ = 50;
+let charts = {};
+let chartsReady = false;
+let selectedRow = null;
+
+// ─── UTILITY ───
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 // ─── INIT ───
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', function() {
+  console.log('[Dashboard] Init start, records:', allData.length);
   document.getElementById('countBadge').textContent = allData.length + ' groups loaded';
+
+  // 1) Populate filter dropdowns
   populateFilters();
+
+  // 2) Register ALL event listeners FIRST (so they always work)
+  document.getElementById('fSearch').addEventListener('input', function() { page = 0; applyFilters(); });
+  var filterIds = ['fStatus','fType','fDg','fPolicy','fTask','fFormal','fCountry'];
+  for (var i = 0; i < filterIds.length; i++) {
+    document.getElementById(filterIds[i]).addEventListener('change', function() { page = 0; applyFilters(); });
+  }
+  console.log('[Dashboard] Event listeners registered');
+
+  // 3) Try to create charts (non-blocking — if Chart.js fails, filters/table still work)
+  try {
+    buildCharts();
+    chartsReady = true;
+    console.log('[Dashboard] Charts created successfully');
+  } catch(e) {
+    console.error('[Dashboard] Chart creation failed:', e);
+    chartsReady = false;
+  }
+
+  // 4) Apply initial filters (populates table, KPIs, and updates charts)
   applyFilters();
-  buildCharts();
-  // listeners
-  document.getElementById('fSearch').addEventListener('input', () => { page = 0; applyFilters(); });
-  ['fStatus','fType','fDg','fPolicy','fTask','fFormal','fCountry'].forEach(id => {
-    document.getElementById(id).addEventListener('change', () => { page = 0; applyFilters(); });
-  });
+  console.log('[Dashboard] Init complete');
 });
 
+// ─── FILTERS ───
 function populateFilters() {
-  const statuses = [...new Set(allData.map(d=>d.status))].filter(Boolean).sort();
-  const types = [...new Set(allData.map(d=>d.type))].filter(Boolean).sort();
-  const dgs = [...new Set(allData.flatMap(d=>(d.leadDgs||'').split(', ')))].filter(Boolean).sort();
-  const policies = [...new Set(allData.flatMap(d=>(d.policyAreas||'').split(', ')))].filter(Boolean).sort();
-  const tasks = [...new Set(allData.flatMap(d=>(d.tasks||'').split(', ')))].filter(Boolean).sort();
-  const formals = [...new Set(allData.flatMap(d=>(d.types||'').split(', ')))].filter(Boolean).sort();
-  // Collect all countries from data
-  const countries = [...new Set(allData.flatMap(d=>d.countries||[]))].filter(Boolean).sort();
+  var statuses = uniqueSorted(allData.map(function(d){return d.status}));
+  var types = uniqueSorted(allData.map(function(d){return d.type}));
+  var dgs = uniqueSorted(allData.flatMap(function(d){return (d.leadDgs||'').split(', ')}));
+  var policies = uniqueSorted(allData.flatMap(function(d){return (d.policyAreas||'').split(', ')}));
+  var tasks = uniqueSorted(allData.flatMap(function(d){return (d.tasks||'').split(', ')}));
+  var formals = uniqueSorted(allData.flatMap(function(d){return (d.types||'').split(', ')}));
+  var countries = uniqueSorted(allData.flatMap(function(d){return d.countries||[]}));
 
-  const fill = (id, arr) => { const s = document.getElementById(id); arr.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; s.appendChild(o); }); };
-  fill('fStatus', statuses); fill('fType', types); fill('fDg', dgs);
-  fill('fPolicy', policies); fill('fTask', tasks); fill('fFormal', formals);
-  fill('fCountry', countries);
+  fillSelect('fStatus', statuses);
+  fillSelect('fType', types);
+  fillSelect('fDg', dgs);
+  fillSelect('fPolicy', policies);
+  fillSelect('fTask', tasks);
+  fillSelect('fFormal', formals);
+  fillSelect('fCountry', countries);
+}
+
+function uniqueSorted(arr) {
+  return Array.from(new Set(arr)).filter(Boolean).sort();
+}
+
+function fillSelect(id, arr) {
+  var s = document.getElementById(id);
+  for (var i = 0; i < arr.length; i++) {
+    var o = document.createElement('option');
+    o.value = arr[i];
+    o.textContent = arr[i];
+    s.appendChild(o);
+  }
 }
 
 function clearFilters() {
   document.getElementById('fSearch').value = '';
-  ['fStatus','fType','fDg','fPolicy','fTask','fFormal','fCountry'].forEach(id => document.getElementById(id).value = '');
-  page = 0; applyFilters();
+  var ids = ['fStatus','fType','fDg','fPolicy','fTask','fFormal','fCountry'];
+  for (var i = 0; i < ids.length; i++) document.getElementById(ids[i]).value = '';
+  page = 0;
+  applyFilters();
 }
 
 function applyFilters() {
-  const q = document.getElementById('fSearch').value.toLowerCase();
-  const fs = document.getElementById('fStatus').value;
-  const ft = document.getElementById('fType').value;
-  const fd = document.getElementById('fDg').value;
-  const fp = document.getElementById('fPolicy').value;
-  const fk = document.getElementById('fTask').value;
-  const ff = document.getElementById('fFormal').value;
-  const fc = document.getElementById('fCountry').value;
+  var q  = document.getElementById('fSearch').value.toLowerCase();
+  var fs = document.getElementById('fStatus').value;
+  var ft = document.getElementById('fType').value;
+  var fd = document.getElementById('fDg').value;
+  var fp = document.getElementById('fPolicy').value;
+  var fk = document.getElementById('fTask').value;
+  var ff = document.getElementById('fFormal').value;
+  var fc = document.getElementById('fCountry').value;
 
-  filtered = allData.filter(d => {
-    if (q && !(d.code+' '+d.title+' '+d.mission).toLowerCase().includes(q)) return false;
+  filtered = allData.filter(function(d) {
+    if (q) {
+      var searchText = (d.code + ' ' + d.title + ' ' + (d.mission||'') + ' ' + (d.leadDgs||'') + ' ' + (d.policyAreas||'') + ' ' + (d.countries||[]).join(' ')).toLowerCase();
+      if (searchText.indexOf(q) === -1) return false;
+    }
     if (fs && d.status !== fs) return false;
     if (ft && d.type !== ft) return false;
-    if (fd && !(d.leadDgs||'').includes(fd)) return false;
-    if (fp && !(d.policyAreas||'').includes(fp)) return false;
-    if (fk && !(d.tasks||'').includes(fk)) return false;
-    if (ff && !(d.types||'').includes(ff)) return false;
-    if (fc && !(d.countries||[]).includes(fc)) return false;
+    if (fd && (d.leadDgs||'').indexOf(fd) === -1) return false;
+    if (fp && (d.policyAreas||'').indexOf(fp) === -1) return false;
+    if (fk && (d.tasks||'').indexOf(fk) === -1) return false;
+    if (ff && (d.types||'').indexOf(ff) === -1) return false;
+    if (fc && (d.countries||[]).indexOf(fc) === -1) return false;
     return true;
   });
 
   sortData();
   renderTable();
   updateKPIs();
-  updateCharts();
-  updateCountryCharts();
+
+  // Update charts (wrapped in try-catch so table/filters always work)
+  try { updateCharts(); } catch(e) { console.error('[Dashboard] updateCharts error:', e); }
+  try { updateCountryCharts(); } catch(e) { console.error('[Dashboard] updateCountryCharts error:', e); }
+
   closeMembersPanel();
 }
 
+// ─── SORTING ───
 function sortBy(col) {
   if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
-  sortData(); renderTable();
+  sortData();
+  renderTable();
 }
 
 function sortData() {
-  filtered.sort((a, b) => {
-    let va, vb;
+  filtered.sort(function(a, b) {
+    var va, vb;
     if (sortCol === 'countriesStr') {
       va = (a.countries||[]).join(', '); vb = (b.countries||[]).join(', ');
     } else {
@@ -320,45 +362,68 @@ function sortData() {
   });
 }
 
+// ─── KPIs ───
 function updateKPIs() {
   document.getElementById('kTotal').textContent = filtered.length;
-  document.getElementById('kActive').textContent = filtered.filter(d => d.statusCode === 'ACTIVE').length;
-  document.getElementById('kClosed').textContent = filtered.filter(d => d.statusCode === 'DISABLED').length;
-  document.getElementById('kMain').textContent = filtered.filter(d => d.type === 'MAIN').length;
+  document.getElementById('kActive').textContent = filtered.filter(function(d){return d.statusCode === 'ACTIVE'}).length;
+  document.getElementById('kClosed').textContent = filtered.filter(function(d){return d.statusCode === 'DISABLED'}).length;
+  document.getElementById('kMain').textContent = filtered.filter(function(d){return d.type === 'MAIN'}).length;
 }
 
+// ─── TABLE ───
 function renderTable() {
-  const start = page * PAGE_SZ;
-  const slice = filtered.slice(start, start + PAGE_SZ);
-  const tbody = document.getElementById('tableBody');
+  var start = page * PAGE_SZ;
+  var slice = filtered.slice(start, start + PAGE_SZ);
+  var tbody = document.getElementById('tableBody');
   tbody.innerHTML = '';
-  slice.forEach(d => {
-    const tr = document.createElement('tr');
-    const sc = d.statusCode === 'ACTIVE' ? 'status-active' : d.statusCode === 'DISABLED' ? 'status-closed' : 'status-hold';
-    const countriesStr = (d.countries||[]).join(', ') || '—';
-    tr.innerHTML = `<td>${d.code}</td><td title="${esc(d.title)}">${esc(d.title)}</td><td>${esc(d.leadDgs)}</td><td>${d.type}</td><td><span class="status-badge ${sc}">${esc(d.status)}</span></td><td title="${esc(d.policyAreas)}">${esc(d.policyAreas)}</td><td class="countries-cell" title="${esc(countriesStr)}">${esc(countriesStr)}</td>`;
+
+  for (var i = 0; i < slice.length; i++) {
+    var d = slice[i];
+    var tr = document.createElement('tr');
+    var sc = d.statusCode === 'ACTIVE' ? 'status-active' : d.statusCode === 'DISABLED' ? 'status-closed' : 'status-hold';
+    var countriesStr = (d.countries||[]).join(', ') || '\u2014';
+
+    tr.innerHTML = '<td>' + esc(d.code) + '</td>' +
+      '<td title="' + esc(d.title) + '">' + esc(d.title) + '</td>' +
+      '<td>' + esc(d.leadDgs) + '</td>' +
+      '<td>' + esc(d.type) + '</td>' +
+      '<td><span class="status-badge ' + sc + '">' + esc(d.status) + '</span></td>' +
+      '<td title="' + esc(d.policyAreas) + '">' + esc(d.policyAreas) + '</td>' +
+      '<td class="countries-cell" title="' + esc(countriesStr) + '">' + esc(countriesStr) + '</td>';
     tr.style.cursor = 'pointer';
-    tr.addEventListener('click', () => showMembers(d, tr));
+    tr.dataset.idx = String(start + i);
+    tr.addEventListener('click', (function(rec, row) {
+      return function() { showMembers(rec, row); };
+    })(d, tr));
     tbody.appendChild(tr);
-  });
-  document.getElementById('tableInfo').textContent = `Showing ${start+1}\u2013${Math.min(start+PAGE_SZ, filtered.length)} of ${filtered.length} groups (from ${allData.length} total)`;
+  }
+
+  var endIdx = Math.min(start + PAGE_SZ, filtered.length);
+  document.getElementById('tableInfo').textContent = 'Showing ' + (start+1) + '\u2013' + endIdx + ' of ' + filtered.length + ' groups (from ' + allData.length + ' total)';
   renderPagination();
 }
 
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
 function renderPagination() {
-  const totalPages = Math.ceil(filtered.length / PAGE_SZ);
-  const div = document.getElementById('pagination');
+  var totalPages = Math.ceil(filtered.length / PAGE_SZ);
+  var div = document.getElementById('pagination');
   div.innerHTML = '';
   if (totalPages <= 1) return;
-  const addBtn = (label, p, disabled = false) => { const b = document.createElement('button'); b.textContent = label; b.disabled = disabled; if (p === page) b.className = 'active'; b.onclick = () => { page = p; renderTable(); }; div.appendChild(b); };
-  addBtn('«', 0, page === 0);
-  addBtn('‹', Math.max(0, page - 1), page === 0);
-  let start = Math.max(0, page - 3), end = Math.min(totalPages - 1, page + 3);
-  for (let i = start; i <= end; i++) addBtn(i + 1, i);
-  addBtn('›', Math.min(totalPages - 1, page + 1), page >= totalPages - 1);
-  addBtn('»', totalPages - 1, page >= totalPages - 1);
+
+  function addBtn(label, p, disabled) {
+    var b = document.createElement('button');
+    b.textContent = label;
+    b.disabled = !!disabled;
+    if (p === page) b.className = 'active';
+    b.onclick = function() { page = p; renderTable(); };
+    div.appendChild(b);
+  }
+
+  addBtn('\u00ab', 0, page === 0);
+  addBtn('\u2039', Math.max(0, page - 1), page === 0);
+  var start = Math.max(0, page - 3), end = Math.min(totalPages - 1, page + 3);
+  for (var i = start; i <= end; i++) addBtn(String(i + 1), i, false);
+  addBtn('\u203a', Math.min(totalPages - 1, page + 1), page >= totalPages - 1);
+  addBtn('\u00bb', totalPages - 1, page >= totalPages - 1);
 }
 
 // ─── MEMBERS PANEL ───
@@ -367,42 +432,44 @@ function showMembers(d, tr) {
   tr.classList.add('selected-row');
   selectedRow = tr;
 
-  const panel = document.getElementById('membersPanel');
-  document.getElementById('memberGroupTitle').textContent = d.code + ' — ' + d.title;
-  const container = document.getElementById('memberCats');
+  var panel = document.getElementById('membersPanel');
+  document.getElementById('memberGroupTitle').textContent = d.code + ' \u2014 ' + d.title;
+  var container = document.getElementById('memberCats');
   container.innerHTML = '';
 
-  const catLabels = {
-    '1': 'Type A — Individual experts',
-    '2': 'Type B — Representatives of interest',
-    '3': 'Type C — Organisations',
-    '4': 'Type D — Member State authorities',
-    '5': 'Type E — Other public entities'
+  var catLabels = {
+    '1': 'Type A \u2014 Individual experts',
+    '2': 'Type B \u2014 Representatives of interest',
+    '3': 'Type C \u2014 Organisations',
+    '4': 'Type D \u2014 Member State authorities',
+    '5': 'Type E \u2014 Other public entities'
   };
 
-  const members = d.members || {};
-  let hasAny = false;
+  var members = d.members || {};
 
-  for (let cat = 1; cat <= 5; cat++) {
-    const mlist = members[String(cat)] || [];
-    const card = document.createElement('div');
+  for (var cat = 1; cat <= 5; cat++) {
+    var mlist = members[String(cat)] || [];
+    var card = document.createElement('div');
     card.className = 'cat-card';
-    const statusBadge = (s) => s === 'Member' ? '<span class="member-badge member-status">Member</span>' : '<span class="member-badge observer-status">' + esc(s) + '</span>';
 
-    let items = '';
-    mlist.forEach(m => {
+    var items = '';
+    for (var j = 0; j < mlist.length; j++) {
+      var m = mlist[j];
+      var badge = m.status === 'Member'
+        ? '<span class="member-badge member-status">Member</span>'
+        : '<span class="member-badge observer-status">' + esc(m.status) + '</span>';
+
       if (cat === 4) {
-        items += `<li>${esc(m.country)} ${statusBadge(m.status)}${m.paCount > 0 ? ' <small>('+m.paCount+' auth.)</small>' : ''}</li>`;
+        items += '<li>' + esc(m.country) + ' ' + badge + (m.paCount > 0 ? ' <small>(' + m.paCount + ' auth.)</small>' : '') + '</li>';
       } else if (cat === 3 || cat === 5) {
-        const areas = (m.areas||[]).join(', ');
-        items += `<li>${esc(m.name)} ${statusBadge(m.status)}${areas ? '<br><small>Areas: '+esc(areas)+'</small>' : ''}</li>`;
+        var areas = (m.areas||[]).join(', ');
+        items += '<li>' + esc(m.name) + ' ' + badge + (areas ? '<br><small>Areas: ' + esc(areas) + '</small>' : '') + '</li>';
       } else {
-        items += `<li>${esc(m.name||'(unnamed)')} ${statusBadge(m.status)}</li>`;
+        items += '<li>' + esc(m.name||'(unnamed)') + ' ' + badge + '</li>';
       }
-    });
+    }
 
-    if (mlist.length > 0) hasAny = true;
-    card.innerHTML = `<h5>${catLabels[String(cat)]} (${mlist.length})</h5><ul>${items || '<li style="color:#999">No members</li>'}</ul>`;
+    card.innerHTML = '<h5>' + catLabels[String(cat)] + ' (' + mlist.length + ')</h5><ul>' + (items || '<li style="color:#999">No members</li>') + '</ul>';
     container.appendChild(card);
   }
 
@@ -417,107 +484,175 @@ function closeMembersPanel() {
 
 // ─── CHARTS ───
 function buildCharts() {
-  const ctx = (id) => document.getElementById(id).getContext('2d');
-  charts.status = new Chart(ctx('chartStatus'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#27ae60','#2c3e50','#f39c12']}]}, options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}} });
-  charts.type = new Chart(ctx('chartType'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#003399','#70a1ff']}]}, options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}} });
-  charts.dg = new Chart(ctx('chartDg'), { type:'bar', data:{labels:[],datasets:[{data:[],backgroundColor:'#003399'}]}, options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}} });
-  charts.policy = new Chart(ctx('chartPolicy'), { type:'bar', data:{labels:[],datasets:[{data:[],backgroundColor:'#FFCC00'}]}, options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}} });
-  // Country bar chart
-  charts.countries = new Chart(ctx('chartCountries'), { type:'bar', data:{labels:[],datasets:[{label:'Groups',data:[],backgroundColor:'#003399'}]}, options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}} });
-  updateCharts();
-  updateCountryCharts();
+  if (typeof Chart === 'undefined') {
+    console.error('[Dashboard] Chart.js not loaded');
+    return;
+  }
+
+  var ctx = function(id) { return document.getElementById(id).getContext('2d'); };
+
+  charts.status = new Chart(ctx('chartStatus'), {
+    type:'doughnut',
+    data:{labels:[],datasets:[{data:[],backgroundColor:['#27ae60','#2c3e50','#f39c12']}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
+  });
+
+  charts.type = new Chart(ctx('chartType'), {
+    type:'doughnut',
+    data:{labels:[],datasets:[{data:[],backgroundColor:['#003399','#70a1ff']}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
+  });
+
+  charts.dg = new Chart(ctx('chartDg'), {
+    type:'bar',
+    data:{labels:[],datasets:[{data:[],backgroundColor:'#003399'}]},
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+  });
+
+  charts.policy = new Chart(ctx('chartPolicy'), {
+    type:'bar',
+    data:{labels:[],datasets:[{data:[],backgroundColor:'#FFCC00'}]},
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+  });
+
+  charts.countries = new Chart(ctx('chartCountries'), {
+    type:'bar',
+    data:{labels:[],datasets:[{label:'Groups',data:[],backgroundColor:'#003399'}]},
+    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
+  });
+
   buildEUMap();
 }
 
 function updateCharts() {
+  if (!chartsReady || !charts.status) return;
+
   // Status
-  const sc = {}; filtered.forEach(d => { sc[d.status] = (sc[d.status]||0)+1; });
-  charts.status.data.labels = Object.keys(sc); charts.status.data.datasets[0].data = Object.values(sc); charts.status.update();
+  var sc = {};
+  filtered.forEach(function(d) { sc[d.status] = (sc[d.status]||0)+1; });
+  charts.status.data.labels = Object.keys(sc);
+  charts.status.data.datasets[0].data = Object.values(sc);
+  charts.status.update();
+
   // Type
-  const tc = {}; filtered.forEach(d => { tc[d.type] = (tc[d.type]||0)+1; });
-  charts.type.data.labels = Object.keys(tc); charts.type.data.datasets[0].data = Object.values(tc); charts.type.update();
-  // DGs
-  const dc = {}; filtered.forEach(d => { (d.leadDgs||'').split(', ').filter(Boolean).forEach(v => dc[v]=(dc[v]||0)+1); });
-  const dSorted = Object.entries(dc).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  charts.dg.data.labels = dSorted.map(x=>x[0]); charts.dg.data.datasets[0].data = dSorted.map(x=>x[1]); charts.dg.update();
-  // Policy
-  const pc = {}; filtered.forEach(d => { (d.policyAreas||'').split(', ').filter(Boolean).forEach(v => pc[v]=(pc[v]||0)+1); });
-  const pSorted = Object.entries(pc).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  charts.policy.data.labels = pSorted.map(x=>x[0]); charts.policy.data.datasets[0].data = pSorted.map(x=>x[1]); charts.policy.update();
+  var tc = {};
+  filtered.forEach(function(d) { tc[d.type] = (tc[d.type]||0)+1; });
+  charts.type.data.labels = Object.keys(tc);
+  charts.type.data.datasets[0].data = Object.values(tc);
+  charts.type.update();
+
+  // DGs top 10
+  var dc = {};
+  filtered.forEach(function(d) {
+    (d.leadDgs||'').split(', ').filter(Boolean).forEach(function(v) { dc[v]=(dc[v]||0)+1; });
+  });
+  var dSorted = Object.entries(dc).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
+  charts.dg.data.labels = dSorted.map(function(x){return x[0]});
+  charts.dg.data.datasets[0].data = dSorted.map(function(x){return x[1]});
+  charts.dg.update();
+
+  // Policy top 10
+  var pc = {};
+  filtered.forEach(function(d) {
+    (d.policyAreas||'').split(', ').filter(Boolean).forEach(function(v) { pc[v]=(pc[v]||0)+1; });
+  });
+  var pSorted = Object.entries(pc).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
+  charts.policy.data.labels = pSorted.map(function(x){return x[0]});
+  charts.policy.data.datasets[0].data = pSorted.map(function(x){return x[1]});
+  charts.policy.update();
 }
 
 function updateCountryCharts() {
-  // Count countries across filtered data
-  const cc = {};
-  filtered.forEach(d => {
-    (d.countries||[]).forEach(c => { cc[c] = (cc[c]||0)+1; });
-  });
-  const sorted = Object.entries(cc).sort((a,b)=>b[1]-a[1]);
-  const top20 = sorted.slice(0, 20);
+  if (!chartsReady || !charts.countries) return;
 
-  // Update bar chart
-  charts.countries.data.labels = top20.map(x=>x[0]);
-  charts.countries.data.datasets[0].data = top20.map(x=>x[1]);
+  var cc = {};
+  filtered.forEach(function(d) {
+    (d.countries||[]).forEach(function(c) { cc[c] = (cc[c]||0)+1; });
+  });
+  var sorted = Object.entries(cc).sort(function(a,b){return b[1]-a[1]});
+  var top20 = sorted.slice(0, 20);
+
+  charts.countries.data.labels = top20.map(function(x){return x[0]});
+  charts.countries.data.datasets[0].data = top20.map(function(x){return x[1]});
   charts.countries.update();
 
-  // Update map colors
   updateMapColors(cc);
 }
 
 // ─── EU MAP ───
 function buildEUMap() {
-  const wrap = document.getElementById('mapSvgWrap');
-  const tooltip = document.getElementById('mapTooltip');
+  var wrap = document.getElementById('mapSvgWrap');
+  var tooltip = document.getElementById('mapTooltip');
 
-  let svg = '<svg viewBox="330 100 340 300" xmlns="http://www.w3.org/2000/svg">';
-  for (const [iso, path] of Object.entries(EU_PATHS)) {
-    svg += `<path id="map-${iso}" d="${path}" fill="#d4dff0" stroke="#fff" stroke-width="1" data-iso="${iso}" style="cursor:pointer;transition:fill .2s"/>`;
+  var svgStr = '<svg viewBox="330 100 340 300" xmlns="http://www.w3.org/2000/svg">';
+  var isoKeys = Object.keys(EU_PATHS);
+  for (var i = 0; i < isoKeys.length; i++) {
+    var iso = isoKeys[i];
+    svgStr += '<path id="map-' + iso + '" d="' + EU_PATHS[iso] + '" fill="#d4dff0" stroke="#fff" stroke-width="1" data-iso="' + iso + '" style="cursor:pointer;transition:fill .2s"/>';
   }
-  svg += '</svg>';
-  wrap.innerHTML = svg;
+  svgStr += '</svg>';
+  wrap.innerHTML = svgStr;
 
-  // Add hover events
-  wrap.querySelectorAll('path').forEach(p => {
-    p.addEventListener('mouseenter', (e) => {
-      const iso = p.dataset.iso;
-      const name = Object.keys(COUNTRY_ISO).find(k => COUNTRY_ISO[k] === iso) || iso;
-      const count = p.dataset.count || 0;
-      tooltip.innerHTML = `<strong>${name}</strong><br>${count} groups`;
-      tooltip.style.display = 'block';
-    });
-    p.addEventListener('mousemove', (e) => {
-      const rect = wrap.getBoundingClientRect();
-      tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
-      tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
-    });
-    p.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
-    p.addEventListener('click', () => {
-      const iso = p.dataset.iso;
-      const name = Object.keys(COUNTRY_ISO).find(k => COUNTRY_ISO[k] === iso) || iso;
-      document.getElementById('fCountry').value = name;
-      page = 0; applyFilters();
-    });
-  });
+  var paths = wrap.querySelectorAll('path');
+  for (var j = 0; j < paths.length; j++) {
+    (function(p) {
+      p.addEventListener('mouseenter', function() {
+        var iso = p.dataset.iso;
+        var name = findCountryName(iso);
+        var count = p.dataset.count || 0;
+        tooltip.innerHTML = '<strong>' + name + '</strong><br>' + count + ' groups';
+        tooltip.style.display = 'block';
+      });
+      p.addEventListener('mousemove', function(e) {
+        var rect = wrap.getBoundingClientRect();
+        tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+        tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
+      });
+      p.addEventListener('mouseleave', function() { tooltip.style.display = 'none'; });
+      p.addEventListener('click', function() {
+        var iso = p.dataset.iso;
+        var name = findCountryName(iso);
+        document.getElementById('fCountry').value = name;
+        page = 0;
+        applyFilters();
+      });
+    })(paths[j]);
+  }
 
-  // Build legend
-  const legend = document.getElementById('mapLegend');
-  const buckets = [
+  // Legend
+  var legend = document.getElementById('mapLegend');
+  var buckets = [
     {color:'#d4dff0', label:'0'},
     {color:'#a8c4e0', label:'1-50'},
     {color:'#6a9fd8', label:'51-150'},
     {color:'#003399', label:'151-300'},
     {color:'#001a4d', label:'300+'}
   ];
-  legend.innerHTML = buckets.map(b => `<span><i style="background:${b.color}"></i>${b.label}</span>`).join('');
+  var legendHtml = '';
+  for (var k = 0; k < buckets.length; k++) {
+    legendHtml += '<span><i style="background:' + buckets[k].color + '"></i>' + buckets[k].label + '</span>';
+  }
+  legend.innerHTML = legendHtml;
+}
+
+function findCountryName(iso) {
+  var keys = Object.keys(COUNTRY_ISO);
+  for (var i = 0; i < keys.length; i++) {
+    if (COUNTRY_ISO[keys[i]] === iso) return keys[i];
+  }
+  return iso;
 }
 
 function updateMapColors(countryCount) {
-  for (const [name, iso] of Object.entries(COUNTRY_ISO)) {
-    const el = document.getElementById('map-' + iso);
+  var entries = Object.entries(COUNTRY_ISO);
+  for (var i = 0; i < entries.length; i++) {
+    var name = entries[i][0];
+    var iso = entries[i][1];
+    var el = document.getElementById('map-' + iso);
     if (!el) continue;
-    const count = countryCount[name] || 0;
+    var count = countryCount[name] || 0;
     el.dataset.count = count;
-    let color;
+    var color;
     if (count === 0) color = '#d4dff0';
     else if (count <= 50) color = '#a8c4e0';
     else if (count <= 150) color = '#6a9fd8';
@@ -529,12 +664,23 @@ function updateMapColors(countryCount) {
 
 // ─── EXPORTS ───
 function exportCSV() {
-  const headers = ['Code','Title','Status','Type','Lead DGs','Policy Areas','Countries','Types','Scope','Tasks','Parent Code','Publication Date','Update Date'];
-  const rows = filtered.map(d => [d.code,d.title,d.status,d.type,d.leadDgs,d.policyAreas,(d.countries||[]).join('; '),d.types,d.scope,d.tasks,d.parentCode,d.pubDate,d.updDate].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(','));
+  var headers = ['Code','Title','Status','Type','Lead DGs','Policy Areas','Countries','Types','Scope','Tasks','Parent Code','Publication Date','Update Date'];
+  var rows = filtered.map(function(d) {
+    return [d.code,d.title,d.status,d.type,d.leadDgs,d.policyAreas,(d.countries||[]).join('; '),d.types,d.scope,d.tasks,d.parentCode,d.pubDate,d.updDate].map(function(v){return '"'+(v||'').replace(/"/g,'""')+'"'}).join(',');
+  });
   download('expert_groups.csv', 'text/csv;charset=utf-8', '\uFEFF' + headers.join(',') + '\n' + rows.join('\n'));
 }
-function exportJSON() { download('expert_groups.json', 'application/json', JSON.stringify(filtered, null, 2)); }
-function download(name, type, content) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content],{type})); a.download = name; a.click(); }
+
+function exportJSON() {
+  download('expert_groups.json', 'application/json', JSON.stringify(filtered, null, 2));
+}
+
+function download(name, type, content) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type:type}));
+  a.download = name;
+  a.click();
+}
 </script>
 </body>
 </html>
