@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EC Expert Groups Register — Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -12,62 +14,85 @@ header{background:#003399;color:#fff;padding:12px 24px;display:flex;justify-cont
 header h1{font-size:1.3rem;font-weight:600}
 header .meta{font-size:.8rem;opacity:.85;text-align:right}
 .layout{display:flex;min-height:calc(100vh - 52px)}
-.sidebar{width:240px;background:#fff;padding:16px;border-right:1px solid #ddd;overflow-y:auto;flex-shrink:0}
-.sidebar h3{color:#003399;font-size:.85rem;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}
-.sidebar label{display:block;font-size:.75rem;color:#555;margin-bottom:2px}
-.sidebar select,.sidebar input[type=text]{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:.82rem;margin-bottom:8px}
-.sidebar button{width:100%;padding:6px;background:#e8eef7;border:1px solid #b0c4de;border-radius:4px;cursor:pointer;font-size:.78rem;color:#003399;margin-top:4px}
+.sidebar{width:260px;background:#fff;padding:16px;border-right:1px solid #ddd;overflow-y:auto;flex-shrink:0;max-height:calc(100vh - 52px)}
+.sidebar h3{color:#003399;font-size:.85rem;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #eee;padding-bottom:4px}
+.sidebar label{display:block;font-size:.72rem;color:#555;margin-bottom:2px;font-weight:500}
+.sidebar select,.sidebar input[type=text],.sidebar input[type=date]{width:100%;padding:5px 7px;border:1px solid #ccc;border-radius:4px;font-size:.78rem;margin-bottom:6px}
+.sidebar button{width:100%;padding:6px;background:#e8eef7;border:1px solid #b0c4de;border-radius:4px;cursor:pointer;font-size:.76rem;color:#003399;margin-top:4px}
 .sidebar button:hover{background:#d0ddef}
-.main{flex:1;padding:16px 20px;overflow-x:hidden}
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.kpi{background:#fff;border-radius:8px;padding:16px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.kpi .number{font-size:2rem;font-weight:700;color:#003399}
-.kpi .label{font-size:.8rem;color:#666;margin-top:2px}
-.charts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.chart-box{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.chart-box h4{color:#003399;font-size:.85rem;margin-bottom:8px}
-.chart-box canvas{max-height:200px}
-.country-section{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-.country-box{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.country-box h4{color:#003399;font-size:.85rem;margin-bottom:8px}
-.country-box canvas{max-height:280px}
-#eu-map-container{position:relative;min-height:300px}
-#eu-map-container svg{width:100%;height:auto}
-.map-tooltip{position:absolute;background:rgba(0,51,153,.92);color:#fff;padding:6px 10px;border-radius:4px;font-size:.78rem;pointer-events:none;display:none;z-index:10}
-.map-legend{display:flex;gap:12px;margin-top:8px;font-size:.72rem;flex-wrap:wrap}
+.main{flex:1;padding:16px 20px;overflow-x:hidden;max-height:calc(100vh - 52px);overflow-y:auto}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border-radius:8px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.kpi .number{font-size:1.8rem;font-weight:700;color:#003399}
+.kpi .label{font-size:.75rem;color:#666;margin-top:2px}
+.charts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.chart-box{background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.chart-box h4{color:#003399;font-size:.82rem;margin-bottom:6px}
+.chart-box canvas{max-height:190px}
+.country-section{display:grid;grid-template-columns:1.3fr 1fr;gap:10px;margin-bottom:14px}
+.country-box{background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.country-box h4{color:#003399;font-size:.82rem;margin-bottom:6px}
+.country-box canvas{max-height:340px}
+#leafletMap{height:360px;width:100%;border-radius:4px}
+.map-legend{display:flex;gap:10px;margin-top:8px;font-size:.7rem;flex-wrap:wrap}
 .map-legend span{display:flex;align-items:center;gap:4px}
 .map-legend i{width:14px;height:10px;border-radius:2px;display:inline-block}
-.members-panel{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:16px;display:none}
-.members-panel h4{color:#003399;font-size:.85rem;margin-bottom:8px}
-.members-panel .member-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
-.members-panel .cat-card{border:1px solid #e0e4ea;border-radius:6px;padding:10px}
-.members-panel .cat-card h5{font-size:.78rem;color:#003399;margin-bottom:6px}
-.members-panel .cat-card ul{list-style:none;font-size:.76rem;max-height:180px;overflow-y:auto}
-.members-panel .cat-card li{padding:2px 0;border-bottom:1px solid #f0f0f0}
-.members-panel .cat-card li:last-child{border:none}
-.member-badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:.65rem;font-weight:600}
-.member-badge.member-status{background:#e8f5e9;color:#2e7d32}
-.member-badge.observer-status{background:#fff3e0;color:#e65100}
 .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
 .toolbar .info{font-size:.8rem;color:#666}
 .toolbar .actions button{padding:5px 12px;background:#003399;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:.78rem;margin-left:6px}
 .toolbar .actions button:hover{background:#002266}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);font-size:.8rem}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);font-size:.78rem}
 thead{background:#003399;color:#fff}
-th{padding:10px 8px;text-align:left;cursor:pointer;white-space:nowrap;font-size:.75rem}
+th{padding:9px 8px;text-align:left;cursor:pointer;white-space:nowrap;font-size:.73rem}
 th:hover{background:#002266}
-td{padding:8px;border-bottom:1px solid #eee;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-tr:hover{background:#f5f7fb}
+td{padding:7px 8px;border-bottom:1px solid #eee;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover{background:#f5f7fb;cursor:pointer}
 tr.selected-row{background:#e3ecfa}
-.status-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:600}
+.status-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.68rem;font-weight:600}
 .status-active{background:#e8f5e9;color:#2e7d32}
 .status-closed{background:#fce4ec;color:#c62828}
 .status-hold{background:#fff3e0;color:#e65100}
-.countries-cell{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
-.pagination{display:flex;justify-content:center;gap:6px;margin-top:12px}
+.countries-cell{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help}
+.pagination{display:flex;justify-content:center;gap:6px;margin-top:12px;margin-bottom:20px}
 .pagination button{padding:4px 10px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;font-size:.78rem}
 .pagination button.active{background:#003399;color:#fff;border-color:#003399}
 .pagination button:disabled{opacity:.4;cursor:default}
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:10px;max-width:1100px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.modal-header{background:#003399;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{font-size:1rem;margin:0;flex:1}
+.modal-header .code{background:rgba(255,255,255,.2);padding:2px 10px;border-radius:12px;font-size:.78rem;margin-right:10px}
+.modal-close{background:transparent;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0 8px}
+.modal-tabs{display:flex;background:#f4f6fa;border-bottom:1px solid #e0e4ea}
+.modal-tab{padding:10px 18px;cursor:pointer;font-size:.82rem;color:#666;border-bottom:3px solid transparent}
+.modal-tab.active{color:#003399;border-bottom-color:#003399;background:#fff;font-weight:600}
+.modal-body{padding:18px 22px;overflow-y:auto;flex:1}
+.modal-pane{display:none}
+.modal-pane.active{display:block}
+.field-grid{display:grid;grid-template-columns:1fr 2fr;gap:8px 14px;margin-bottom:14px}
+.field-grid .lbl{font-size:.75rem;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.field-grid .val{font-size:.85rem;color:#1a1a2e;word-break:break-word}
+.field-grid .val a{color:#003399}
+.section-title{color:#003399;font-size:.95rem;font-weight:600;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #e8eef7}
+.member-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.cat-card{border:1px solid #e0e4ea;border-radius:8px;padding:12px;background:#fafbfc}
+.cat-card h5{font-size:.82rem;color:#003399;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #e0e4ea}
+.cat-card ul{list-style:none;font-size:.78rem;max-height:280px;overflow-y:auto}
+.cat-card li{padding:5px 0;border-bottom:1px solid #f0f0f0}
+.cat-card li:last-child{border:none}
+.member-badge{display:inline-block;padding:1px 7px;border-radius:8px;font-size:.66rem;font-weight:600;margin-left:4px}
+.member-badge.member-status{background:#e8f5e9;color:#2e7d32}
+.member-badge.observer-status{background:#fff3e0;color:#e65100}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+.stat-card{background:#f4f6fa;border-radius:8px;padding:14px;text-align:center}
+.stat-card .num{font-size:1.6rem;font-weight:700;color:#003399}
+.stat-card .lbl{font-size:.75rem;color:#666;margin-top:2px}
+.doc-list{list-style:none;font-size:.84rem}
+.doc-list li{padding:6px 0;border-bottom:1px solid #f0f0f0}
+.doc-list a{color:#003399;text-decoration:none}
+.doc-list a:hover{text-decoration:underline}
 footer{text-align:center;padding:12px;font-size:.7rem;color:#888;background:#fff;border-top:1px solid #eee}
 </style>
 </head>
@@ -84,38 +109,60 @@ footer{text-align:center;padding:12px;font-size:.7rem;color:#888;background:#fff
 <aside class="sidebar">
   <h3>Search</h3>
   <label>Free-text search</label>
-  <input type="text" id="fSearch" placeholder="Name, code or mission...">
-  <h3>Filters</h3>
+  <input type="text" id="fSearch" placeholder="Name, code, mission, countries, DGs...">
+
+  <h3>Core Filters</h3>
   <label>Status</label><select id="fStatus"><option value="">All statuses</option></select>
-  <label>Type</label><select id="fType"><option value="">All</option></select>
+  <label>Type</label><select id="fType"><option value="">All types</option></select>
+  <label>Formal / Informal</label><select id="fFormal"><option value="">All</option></select>
   <label>Lead DG</label><select id="fDg"><option value="">All DGs</option></select>
   <label>Policy Area</label><select id="fPolicy"><option value="">All policy areas</option></select>
   <label>Task</label><select id="fTask"><option value="">All tasks</option></select>
-  <label>Formal / Informal</label><select id="fFormal"><option value="">All</option></select>
-  <label>Country</label><select id="fCountry"><option value="">All countries</option></select>
+  <label>Scope</label><select id="fScope"><option value="">All scopes</option></select>
+
+  <h3>Members &amp; Countries</h3>
+  <label>Country participating</label><select id="fCountry"><option value="">All countries</option></select>
+  <label>Has member type</label>
+  <select id="fMemberType">
+    <option value="">Any</option>
+    <option value="1">A — Individual experts</option>
+    <option value="2">B — Representatives of interest</option>
+    <option value="3">C — Organisations</option>
+    <option value="4">D — Member State authorities</option>
+    <option value="5">E — Other public entities</option>
+  </select>
+  <label>Min. total members</label>
+  <input type="text" id="fMinMembers" placeholder="e.g. 10">
+
+  <h3>Dates</h3>
+  <label>Published after</label><input type="date" id="fPubAfter">
+  <label>Updated after</label><input type="date" id="fUpdAfter">
+
   <button onclick="clearFilters()">Clear all filters</button>
 </aside>
 <div class="main">
+  <!-- KPIs -->
   <div class="kpi-row">
     <div class="kpi"><div class="number" id="kTotal">0</div><div class="label">Total (filtered)</div></div>
     <div class="kpi"><div class="number" id="kActive">0</div><div class="label">Active</div></div>
     <div class="kpi"><div class="number" id="kClosed">0</div><div class="label">Closed</div></div>
     <div class="kpi"><div class="number" id="kMain">0</div><div class="label">Main Groups</div></div>
+    <div class="kpi"><div class="number" id="kMembers">0</div><div class="label">Total Members</div></div>
   </div>
+
+  <!-- Chart row -->
   <div class="charts-row">
     <div class="chart-box"><h4>By Status</h4><canvas id="chartStatus"></canvas></div>
     <div class="chart-box"><h4>By Type</h4><canvas id="chartType"></canvas></div>
     <div class="chart-box"><h4>Top 10 Lead DGs</h4><canvas id="chartDg"></canvas></div>
     <div class="chart-box"><h4>Top 10 Policy Areas</h4><canvas id="chartPolicy"></canvas></div>
   </div>
+
+  <!-- Map + Country chart -->
   <div class="country-section">
     <div class="country-box">
-      <h4>Member States Participation Map</h4>
-      <div id="eu-map-container">
-        <div class="map-tooltip" id="mapTooltip"></div>
-        <canvas id="chartMap" style="display:none"></canvas>
-        <div id="mapSvgWrap"></div>
-      </div>
+      <h4>Member States Participation (click country to filter)</h4>
+      <div id="leafletMap"></div>
       <div class="map-legend" id="mapLegend"></div>
     </div>
     <div class="country-box">
@@ -123,11 +170,8 @@ footer{text-align:center;padding:12px;font-size:.7rem;color:#888;background:#fff
       <canvas id="chartCountries"></canvas>
     </div>
   </div>
-  <div class="members-panel" id="membersPanel">
-    <h4>Members of: <span id="memberGroupTitle"></span></h4>
-    <div class="member-cats" id="memberCats"></div>
-    <button onclick="closeMembersPanel()" style="margin-top:8px;padding:4px 12px;background:#e8eef7;border:1px solid #b0c4de;border-radius:4px;cursor:pointer;font-size:.78rem;color:#003399">Close</button>
-  </div>
+
+  <!-- Toolbar -->
   <div class="toolbar">
     <span class="info" id="tableInfo">Showing 0 groups</span>
     <div class="actions">
@@ -135,21 +179,48 @@ footer{text-align:center;padding:12px;font-size:.7rem;color:#888;background:#fff
       <button onclick="exportJSON()">Export JSON</button>
     </div>
   </div>
+
+  <!-- Table -->
   <table id="dataTable">
     <thead><tr>
-      <th data-col="code" onclick="sortBy('code')">Code &#9650;</th>
-      <th data-col="title" onclick="sortBy('title')">Name</th>
-      <th data-col="leadDgs" onclick="sortBy('leadDgs')">Lead DG</th>
-      <th data-col="type" onclick="sortBy('type')">Type</th>
-      <th data-col="status" onclick="sortBy('status')">Status</th>
-      <th data-col="policyAreas" onclick="sortBy('policyAreas')">Policy Area</th>
-      <th data-col="countries" onclick="sortBy('countriesStr')">Countries</th>
+      <th onclick="sortBy('code')">Code &#9650;</th>
+      <th onclick="sortBy('title')">Name</th>
+      <th onclick="sortBy('leadDgs')">Lead DG</th>
+      <th onclick="sortBy('type')">Type</th>
+      <th onclick="sortBy('status')">Status</th>
+      <th onclick="sortBy('policyAreas')">Policy Area</th>
+      <th onclick="sortBy('countriesStr')">Countries</th>
+      <th onclick="sortBy('memberCount')">Members</th>
     </tr></thead>
     <tbody id="tableBody"></tbody>
   </table>
   <div class="pagination" id="pagination"></div>
 </div>
 </div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <span class="code" id="mCode">—</span>
+      <h3 id="mTitle">—</h3>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" data-tab="overview" onclick="switchTab('overview')">Overview</div>
+      <div class="modal-tab" data-tab="members" onclick="switchTab('members')">Members</div>
+      <div class="modal-tab" data-tab="statistics" onclick="switchTab('statistics')">Statistics</div>
+      <div class="modal-tab" data-tab="additional" onclick="switchTab('additional')">Additional Info</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-pane active" id="paneOverview"></div>
+      <div class="modal-pane" id="paneMembers"></div>
+      <div class="modal-pane" id="paneStatistics"></div>
+      <div class="modal-pane" id="paneAdditional"></div>
+    </div>
+  </div>
+</div>
+
 <footer>
   EC Expert Groups Register Dashboard &mdash; Data: European Commission &mdash; Licence: Decision 2011/833/EU &mdash; DCIRI/DSSD/SGGov
 </footer>
@@ -176,50 +247,17 @@ const COUNTRY_ISO = {
   "Montenegro":"ME","North Macedonia":"MK","Serbia":"RS","Ukraine":"UA","Kosovo":"XK",
   "Turkey":"TR","United Kingdom":"GB"
 };
-
-// ─── EU MAP SVG PATHS ───
-const EU_PATHS = {
-  AT:"M491,282 L500,278 510,282 512,290 505,294 495,292Z",
-  BE:"M443,248 L450,244 458,248 456,256 448,256Z",
-  BG:"M560,310 L580,306 590,315 585,325 565,322Z",
-  HR:"M510,300 L525,295 530,305 520,315 505,310Z",
-  CY:"M590,365 L600,362 605,368 598,372Z",
-  CZ:"M495,265 L510,260 518,268 510,276 498,273Z",
-  DK:"M470,215 L478,208 485,215 480,225 472,222Z",
-  EE:"M545,185 L555,180 560,188 552,194Z",
-  FI:"M540,140 L555,130 565,145 555,170 540,165Z",
-  FR:"M415,280 L440,260 460,270 455,300 430,310 410,295Z",
-  DE:"M465,240 L490,230 500,250 495,275 470,270Z",
-  GR:"M545,340 L560,330 568,345 555,360 540,350Z",
-  HU:"M520,285 L540,280 545,292 535,300 518,296Z",
-  IE:"M390,230 L405,225 408,238 398,242Z",
-  IT:"M480,310 L495,300 505,320 498,350 485,340 478,325Z",
-  LV:"M540,195 L555,192 558,202 548,206Z",
-  LT:"M535,205 L550,202 554,214 540,216Z",
-  LU:"M450,258 L455,255 458,260 452,262Z",
-  MT:"M490,375 L495,372 498,376 493,378Z",
-  NL:"M448,235 L458,230 462,240 454,244Z",
-  PL:"M510,240 L535,235 545,255 535,270 512,265Z",
-  PT:"M390,315 L400,308 404,325 395,335Z",
-  RO:"M545,290 L570,285 578,300 565,310 542,305Z",
-  SK:"M520,272 L538,268 542,278 528,282Z",
-  SI:"M502,295 L512,291 515,298 506,301Z",
-  ES:"M395,310 L430,300 440,320 425,340 395,335Z",
-  SE:"M495,155 L505,140 515,160 510,200 498,195Z",
-  NO:"M475,130 L490,115 500,135 495,175 480,170Z",
-  GB:"M400,210 L420,200 425,225 415,240 395,235Z",
-  IS:"M350,140 L370,135 375,148 355,150Z",
-  CH:"M465,285 L475,280 480,288 472,292Z",
-  RS:"M535,305 L550,300 555,312 542,318Z",
-  AL:"M535,330 L543,325 548,335 540,340Z",
-  ME:"M528,318 L536,314 540,322 532,326Z",
-  MK:"M545,325 L558,320 562,330 550,334Z",
-  BA:"M515,305 L528,300 532,312 518,316Z",
-  UA:"M570,240 L605,230 615,260 595,275 565,265Z",
-  MD:"M575,270 L585,265 588,278 578,280Z",
-  GE:"M620,280 L640,275 645,285 630,290Z",
-  TR:"M580,340 L620,330 640,345 615,355 585,350Z",
-  XK:"M535,318 L545,314 548,322 538,326Z"
+// ISO-3 mapping (for GeoJSON properties)
+const ISO3_TO_NAME = {
+  "AUT":"Austria","BEL":"Belgium","BGR":"Bulgaria","HRV":"Croatia","CYP":"Cyprus",
+  "CZE":"Czech Republic","DNK":"Denmark","EST":"Estonia","FIN":"Finland","FRA":"France",
+  "DEU":"Germany","GRC":"Greece","HUN":"Hungary","IRL":"Ireland","ITA":"Italy",
+  "LVA":"Latvia","LTU":"Lithuania","LUX":"Luxembourg","MLT":"Malta","NLD":"Netherlands",
+  "POL":"Poland","PRT":"Portugal","ROU":"Romania","SVK":"Slovakia","SVN":"Slovenia",
+  "ESP":"Spain","SWE":"Sweden","NOR":"Norway","ISL":"Iceland","LIE":"Liechtenstein",
+  "CHE":"Switzerland","ALB":"Albania","BIH":"Bosnia and Herzegovina","GEO":"Georgia",
+  "MDA":"Moldova","MNE":"Montenegro","MKD":"North Macedonia","SRB":"Serbia",
+  "UKR":"Ukraine","XKX":"Kosovo","TUR":"Turkey","GBR":"United Kingdom"
 };
 
 // ─── STATE ───
@@ -230,134 +268,128 @@ let page = 0;
 const PAGE_SZ = 50;
 let charts = {};
 let chartsReady = false;
+let leafletMap = null;
+let geoLayer = null;
+let countryCounts = {};
 let selectedRow = null;
+let currentRecord = null;
 
 // ─── UTILITY ───
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function joinList(arr) { return (arr||[]).join(', '); }
+function fmtDate(s) { if(!s) return '—'; return s.substring(0,10); }
 
 // ─── INIT ───
 window.addEventListener('DOMContentLoaded', function() {
-  console.log('[Dashboard] Init start, records:', allData.length);
+  console.log('[Dashboard] Init, records:', allData.length);
   document.getElementById('countBadge').textContent = allData.length + ' groups loaded';
 
-  // 1) Populate filter dropdowns
   populateFilters();
 
-  // 2) Register ALL event listeners FIRST (so they always work)
-  document.getElementById('fSearch').addEventListener('input', function() { page = 0; applyFilters(); });
-  var filterIds = ['fStatus','fType','fDg','fPolicy','fTask','fFormal','fCountry'];
-  for (var i = 0; i < filterIds.length; i++) {
-    document.getElementById(filterIds[i]).addEventListener('change', function() { page = 0; applyFilters(); });
+  // Register ALL event listeners FIRST (so they always work)
+  document.getElementById('fSearch').addEventListener('input', function(){ page=0; applyFilters(); });
+  var ids = ['fStatus','fType','fFormal','fDg','fPolicy','fTask','fScope','fCountry','fMemberType'];
+  for (var i=0; i<ids.length; i++) {
+    document.getElementById(ids[i]).addEventListener('change', function(){ page=0; applyFilters(); });
   }
+  document.getElementById('fMinMembers').addEventListener('input', function(){ page=0; applyFilters(); });
+  document.getElementById('fPubAfter').addEventListener('change', function(){ page=0; applyFilters(); });
+  document.getElementById('fUpdAfter').addEventListener('change', function(){ page=0; applyFilters(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
   console.log('[Dashboard] Event listeners registered');
 
-  // 3) Try to create charts (non-blocking — if Chart.js fails, filters/table still work)
-  try {
-    buildCharts();
-    chartsReady = true;
-    console.log('[Dashboard] Charts created successfully');
-  } catch(e) {
-    console.error('[Dashboard] Chart creation failed:', e);
-    chartsReady = false;
-  }
+  try { buildCharts(); chartsReady = true; } catch(e) { console.error('[Dashboard] Chart error:', e); }
+  try { initLeafletMap(); } catch(e) { console.error('[Dashboard] Map error:', e); }
 
-  // 4) Apply initial filters (populates table, KPIs, and updates charts)
   applyFilters();
   console.log('[Dashboard] Init complete');
 });
 
 // ─── FILTERS ───
 function populateFilters() {
-  var statuses = uniqueSorted(allData.map(function(d){return d.status}));
-  var types = uniqueSorted(allData.map(function(d){return d.type}));
-  var dgs = uniqueSorted(allData.flatMap(function(d){return (d.leadDgs||'').split(', ')}));
-  var policies = uniqueSorted(allData.flatMap(function(d){return (d.policyAreas||'').split(', ')}));
-  var tasks = uniqueSorted(allData.flatMap(function(d){return (d.tasks||'').split(', ')}));
-  var formals = uniqueSorted(allData.flatMap(function(d){return (d.types||'').split(', ')}));
-  var countries = uniqueSorted(allData.flatMap(function(d){return d.countries||[]}));
-
-  fillSelect('fStatus', statuses);
-  fillSelect('fType', types);
-  fillSelect('fDg', dgs);
-  fillSelect('fPolicy', policies);
-  fillSelect('fTask', tasks);
-  fillSelect('fFormal', formals);
-  fillSelect('fCountry', countries);
+  fillSelect('fStatus',  uniqueSorted(allData.map(function(d){return d.status})));
+  fillSelect('fType',    uniqueSorted(allData.map(function(d){return d.type})));
+  fillSelect('fDg',      uniqueSorted(allData.flatMap(function(d){return d.leadDgsList||[]})));
+  fillSelect('fPolicy',  uniqueSorted(allData.flatMap(function(d){return d.policyAreasList||[]})));
+  fillSelect('fTask',    uniqueSorted(allData.flatMap(function(d){return d.tasksList||[]})));
+  fillSelect('fFormal',  uniqueSorted(allData.flatMap(function(d){return d.typesList||[]})));
+  fillSelect('fScope',   uniqueSorted(allData.flatMap(function(d){return d.scopeList||[]})));
+  fillSelect('fCountry', uniqueSorted(allData.flatMap(function(d){return d.countries||[]})));
 }
 
-function uniqueSorted(arr) {
-  return Array.from(new Set(arr)).filter(Boolean).sort();
-}
+function uniqueSorted(arr) { return Array.from(new Set(arr)).filter(Boolean).sort(); }
 
 function fillSelect(id, arr) {
   var s = document.getElementById(id);
-  for (var i = 0; i < arr.length; i++) {
+  for (var i=0; i<arr.length; i++) {
     var o = document.createElement('option');
-    o.value = arr[i];
-    o.textContent = arr[i];
+    o.value = arr[i]; o.textContent = arr[i];
     s.appendChild(o);
   }
 }
 
 function clearFilters() {
   document.getElementById('fSearch').value = '';
-  var ids = ['fStatus','fType','fDg','fPolicy','fTask','fFormal','fCountry'];
-  for (var i = 0; i < ids.length; i++) document.getElementById(ids[i]).value = '';
-  page = 0;
-  applyFilters();
+  var ids = ['fStatus','fType','fFormal','fDg','fPolicy','fTask','fScope','fCountry','fMemberType'];
+  for (var i=0; i<ids.length; i++) document.getElementById(ids[i]).value = '';
+  document.getElementById('fMinMembers').value = '';
+  document.getElementById('fPubAfter').value = '';
+  document.getElementById('fUpdAfter').value = '';
+  page = 0; applyFilters();
 }
 
 function applyFilters() {
-  var q  = document.getElementById('fSearch').value.toLowerCase();
-  var fs = document.getElementById('fStatus').value;
-  var ft = document.getElementById('fType').value;
-  var fd = document.getElementById('fDg').value;
-  var fp = document.getElementById('fPolicy').value;
-  var fk = document.getElementById('fTask').value;
-  var ff = document.getElementById('fFormal').value;
-  var fc = document.getElementById('fCountry').value;
+  var q   = document.getElementById('fSearch').value.toLowerCase();
+  var fs  = document.getElementById('fStatus').value;
+  var ft  = document.getElementById('fType').value;
+  var ff  = document.getElementById('fFormal').value;
+  var fd  = document.getElementById('fDg').value;
+  var fp  = document.getElementById('fPolicy').value;
+  var fk  = document.getElementById('fTask').value;
+  var fsc = document.getElementById('fScope').value;
+  var fc  = document.getElementById('fCountry').value;
+  var fmt = document.getElementById('fMemberType').value;
+  var fmn = parseInt(document.getElementById('fMinMembers').value||'0',10) || 0;
+  var fpa = document.getElementById('fPubAfter').value;
+  var fua = document.getElementById('fUpdAfter').value;
 
-  filtered = allData.filter(function(d) {
+  filtered = allData.filter(function(d){
     if (q) {
-      var searchText = (d.code + ' ' + d.title + ' ' + (d.mission||'') + ' ' + (d.leadDgs||'') + ' ' + (d.policyAreas||'') + ' ' + (d.countries||[]).join(' ')).toLowerCase();
-      if (searchText.indexOf(q) === -1) return false;
+      var hay = (d.code+' '+d.title+' '+(d.mission||'')+' '+(d.leadDgs||'')+' '+(d.policyAreas||'')+' '+(d.abbr||'')+' '+(d.countries||[]).join(' ')).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
     }
-    if (fs && d.status !== fs) return false;
-    if (ft && d.type !== ft) return false;
-    if (fd && (d.leadDgs||'').indexOf(fd) === -1) return false;
-    if (fp && (d.policyAreas||'').indexOf(fp) === -1) return false;
-    if (fk && (d.tasks||'').indexOf(fk) === -1) return false;
-    if (ff && (d.types||'').indexOf(ff) === -1) return false;
-    if (fc && (d.countries||[]).indexOf(fc) === -1) return false;
+    if (fs  && d.status !== fs) return false;
+    if (ft  && d.type !== ft) return false;
+    if (ff  && (d.typesList||[]).indexOf(ff) === -1) return false;
+    if (fd  && (d.leadDgsList||[]).indexOf(fd) === -1) return false;
+    if (fp  && (d.policyAreasList||[]).indexOf(fp) === -1) return false;
+    if (fk  && (d.tasksList||[]).indexOf(fk) === -1) return false;
+    if (fsc && (d.scopeList||[]).indexOf(fsc) === -1) return false;
+    if (fc  && (d.countries||[]).indexOf(fc) === -1) return false;
+    if (fmt && (!(d.members||{})[fmt] || (d.members||{})[fmt].length === 0)) return false;
+    if (fmn && (d.memberCount||0) < fmn) return false;
+    if (fpa && (d.pubDate||'') < fpa) return false;
+    if (fua && (d.updDate||'') < fua) return false;
     return true;
   });
 
-  sortData();
-  renderTable();
-  updateKPIs();
-
-  // Update charts (wrapped in try-catch so table/filters always work)
-  try { updateCharts(); } catch(e) { console.error('[Dashboard] updateCharts error:', e); }
-  try { updateCountryCharts(); } catch(e) { console.error('[Dashboard] updateCountryCharts error:', e); }
-
-  closeMembersPanel();
+  sortData(); renderTable(); updateKPIs();
+  try { updateCharts(); } catch(e) { console.error(e); }
+  try { updateCountryCharts(); } catch(e) { console.error(e); }
 }
 
 // ─── SORTING ───
 function sortBy(col) {
   if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
-  sortData();
-  renderTable();
+  sortData(); renderTable();
 }
 
 function sortData() {
-  filtered.sort(function(a, b) {
+  filtered.sort(function(a,b){
     var va, vb;
-    if (sortCol === 'countriesStr') {
-      va = (a.countries||[]).join(', '); vb = (b.countries||[]).join(', ');
-    } else {
-      va = a[sortCol] || ''; vb = b[sortCol] || '';
-    }
+    if (sortCol === 'countriesStr') { va=(a.countries||[]).join(','); vb=(b.countries||[]).join(','); }
+    else if (sortCol === 'memberCount') { va=a.memberCount||0; vb=b.memberCount||0; }
+    else { va = a[sortCol] || ''; vb = b[sortCol] || ''; }
     return va < vb ? -sortDir : va > vb ? sortDir : 0;
   });
 }
@@ -365,262 +397,349 @@ function sortData() {
 // ─── KPIs ───
 function updateKPIs() {
   document.getElementById('kTotal').textContent = filtered.length;
-  document.getElementById('kActive').textContent = filtered.filter(function(d){return d.statusCode === 'ACTIVE'}).length;
-  document.getElementById('kClosed').textContent = filtered.filter(function(d){return d.statusCode === 'DISABLED'}).length;
-  document.getElementById('kMain').textContent = filtered.filter(function(d){return d.type === 'MAIN'}).length;
+  document.getElementById('kActive').textContent = filtered.filter(function(d){return d.statusCode==='ACTIVE'}).length;
+  document.getElementById('kClosed').textContent = filtered.filter(function(d){return d.statusCode==='DISABLED'}).length;
+  document.getElementById('kMain').textContent = filtered.filter(function(d){return d.type==='MAIN'}).length;
+  var totalMembers = filtered.reduce(function(s,d){return s+(d.memberCount||0)}, 0);
+  document.getElementById('kMembers').textContent = totalMembers.toLocaleString();
 }
 
 // ─── TABLE ───
 function renderTable() {
   var start = page * PAGE_SZ;
-  var slice = filtered.slice(start, start + PAGE_SZ);
+  var slice = filtered.slice(start, start+PAGE_SZ);
   var tbody = document.getElementById('tableBody');
   tbody.innerHTML = '';
-
-  for (var i = 0; i < slice.length; i++) {
+  for (var i=0; i<slice.length; i++) {
     var d = slice[i];
     var tr = document.createElement('tr');
-    var sc = d.statusCode === 'ACTIVE' ? 'status-active' : d.statusCode === 'DISABLED' ? 'status-closed' : 'status-hold';
-    var countriesStr = (d.countries||[]).join(', ') || '\u2014';
-
-    tr.innerHTML = '<td>' + esc(d.code) + '</td>' +
-      '<td title="' + esc(d.title) + '">' + esc(d.title) + '</td>' +
-      '<td>' + esc(d.leadDgs) + '</td>' +
-      '<td>' + esc(d.type) + '</td>' +
-      '<td><span class="status-badge ' + sc + '">' + esc(d.status) + '</span></td>' +
-      '<td title="' + esc(d.policyAreas) + '">' + esc(d.policyAreas) + '</td>' +
-      '<td class="countries-cell" title="' + esc(countriesStr) + '">' + esc(countriesStr) + '</td>';
-    tr.style.cursor = 'pointer';
-    tr.dataset.idx = String(start + i);
-    tr.addEventListener('click', (function(rec, row) {
-      return function() { showMembers(rec, row); };
+    var sc = d.statusCode==='ACTIVE' ? 'status-active' : d.statusCode==='DISABLED' ? 'status-closed' : 'status-hold';
+    var countriesStr = (d.countries||[]).join(', ') || '—';
+    tr.innerHTML =
+      '<td>'+esc(d.code)+'</td>' +
+      '<td title="'+esc(d.title)+'">'+esc(d.title)+'</td>' +
+      '<td>'+esc(d.leadDgs)+'</td>' +
+      '<td>'+esc(d.type)+'</td>' +
+      '<td><span class="status-badge '+sc+'">'+esc(d.status)+'</span></td>' +
+      '<td title="'+esc(d.policyAreas)+'">'+esc(d.policyAreas)+'</td>' +
+      '<td class="countries-cell" title="'+esc(countriesStr)+'">'+esc(countriesStr)+'</td>' +
+      '<td>'+(d.memberCount||0)+'</td>';
+    tr.addEventListener('click', (function(rec, row){
+      return function(){ openModal(rec, row); };
     })(d, tr));
     tbody.appendChild(tr);
   }
-
-  var endIdx = Math.min(start + PAGE_SZ, filtered.length);
-  document.getElementById('tableInfo').textContent = 'Showing ' + (start+1) + '\u2013' + endIdx + ' of ' + filtered.length + ' groups (from ' + allData.length + ' total)';
+  var endIdx = Math.min(start+PAGE_SZ, filtered.length);
+  document.getElementById('tableInfo').textContent = 'Showing '+(start+1)+'–'+endIdx+' of '+filtered.length+' groups (from '+allData.length+' total)';
   renderPagination();
 }
 
 function renderPagination() {
-  var totalPages = Math.ceil(filtered.length / PAGE_SZ);
-  var div = document.getElementById('pagination');
-  div.innerHTML = '';
-  if (totalPages <= 1) return;
-
-  function addBtn(label, p, disabled) {
+  var tp = Math.ceil(filtered.length / PAGE_SZ);
+  var div = document.getElementById('pagination'); div.innerHTML = '';
+  if (tp <= 1) return;
+  function btn(label, p, dis) {
     var b = document.createElement('button');
-    b.textContent = label;
-    b.disabled = !!disabled;
-    if (p === page) b.className = 'active';
-    b.onclick = function() { page = p; renderTable(); };
+    b.textContent = label; b.disabled = !!dis;
+    if (p===page) b.className = 'active';
+    b.onclick = function(){ page=p; renderTable(); };
     div.appendChild(b);
   }
-
-  addBtn('\u00ab', 0, page === 0);
-  addBtn('\u2039', Math.max(0, page - 1), page === 0);
-  var start = Math.max(0, page - 3), end = Math.min(totalPages - 1, page + 3);
-  for (var i = start; i <= end; i++) addBtn(String(i + 1), i, false);
-  addBtn('\u203a', Math.min(totalPages - 1, page + 1), page >= totalPages - 1);
-  addBtn('\u00bb', totalPages - 1, page >= totalPages - 1);
+  btn('«', 0, page===0); btn('‹', Math.max(0,page-1), page===0);
+  var st = Math.max(0, page-3), en = Math.min(tp-1, page+3);
+  for (var i=st; i<=en; i++) btn(String(i+1), i, false);
+  btn('›', Math.min(tp-1,page+1), page>=tp-1); btn('»', tp-1, page>=tp-1);
 }
 
-// ─── MEMBERS PANEL ───
-function showMembers(d, tr) {
+// ─── MODAL ───
+function openModal(d, row) {
   if (selectedRow) selectedRow.classList.remove('selected-row');
-  tr.classList.add('selected-row');
-  selectedRow = tr;
+  if (row) { row.classList.add('selected-row'); selectedRow = row; }
+  currentRecord = d;
 
-  var panel = document.getElementById('membersPanel');
-  document.getElementById('memberGroupTitle').textContent = d.code + ' \u2014 ' + d.title;
-  var container = document.getElementById('memberCats');
-  container.innerHTML = '';
+  document.getElementById('mCode').textContent = d.code || '—';
+  document.getElementById('mTitle').textContent = d.title || '—';
 
+  renderOverviewPane(d);
+  renderMembersPane(d);
+  renderStatisticsPane(d);
+  renderAdditionalPane(d);
+  switchTab('overview');
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  if (selectedRow) { selectedRow.classList.remove('selected-row'); selectedRow = null; }
+}
+
+function switchTab(name) {
+  var tabs = document.querySelectorAll('.modal-tab');
+  for (var i=0; i<tabs.length; i++) tabs[i].classList.toggle('active', tabs[i].dataset.tab===name);
+  var panes = document.querySelectorAll('.modal-pane');
+  for (var j=0; j<panes.length; j++) panes[j].classList.remove('active');
+  document.getElementById('pane'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
+}
+
+function renderOverviewPane(d) {
+  var sc = d.statusCode==='ACTIVE' ? 'status-active' : d.statusCode==='DISABLED' ? 'status-closed' : 'status-hold';
+  var html = '';
+  html += '<div class="section-title">Identification</div>';
+  html += '<div class="field-grid">';
+  html += '<div class="lbl">Code</div><div class="val">'+esc(d.code)+'</div>';
+  html += '<div class="lbl">Title</div><div class="val">'+esc(d.title)+'</div>';
+  html += '<div class="lbl">Abbreviation</div><div class="val">'+esc(d.abbr||'—')+'</div>';
+  html += '<div class="lbl">Status</div><div class="val"><span class="status-badge '+sc+'">'+esc(d.status)+'</span></div>';
+  html += '<div class="lbl">Type</div><div class="val">'+esc(d.type)+'</div>';
+  html += '<div class="lbl">Formal / Informal</div><div class="val">'+esc(d.types||'—')+'</div>';
+  if (d.parentCode) {
+    html += '<div class="lbl">Parent group</div><div class="val">'+esc(d.parentCode)+' — '+esc(d.parentTitle)+'</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="section-title">Classification</div>';
+  html += '<div class="field-grid">';
+  html += '<div class="lbl">Policy Areas</div><div class="val">'+esc(d.policyAreas||'—')+'</div>';
+  html += '<div class="lbl">Other policy area</div><div class="val">'+esc(d.policyOther||'—')+'</div>';
+  html += '<div class="lbl">Lead DG(s)</div><div class="val">'+esc(d.leadDgs||'—')+'</div>';
+  html += '<div class="lbl">Associated DG(s)</div><div class="val">'+esc(d.assocDgs||'—')+'</div>';
+  html += '<div class="lbl">Scope</div><div class="val">'+esc(d.scope||'—')+'</div>';
+  html += '<div class="lbl">Tasks</div><div class="val">'+esc(d.tasks||'—')+'</div>';
+  html += '</div>';
+
+  html += '<div class="section-title">Description</div>';
+  html += '<div class="field-grid">';
+  html += '<div class="lbl">Mission</div><div class="val">'+esc(d.mission||'—')+'</div>';
+  html += '<div class="lbl">Creating act</div><div class="val">'+esc(d.createAct||'—')+'</div>';
+  if (d.torLink) {
+    html += '<div class="lbl">Terms of Reference</div><div class="val"><a href="'+esc(d.torLink)+'" target="_blank" rel="noopener">Open ToR document</a></div>';
+  }
+  html += '<div class="lbl">Contact</div><div class="val">'+esc(d.contact||'—')+'</div>';
+  html += '</div>';
+
+  html += '<div class="section-title">Dates &amp; Geography</div>';
+  html += '<div class="field-grid">';
+  html += '<div class="lbl">Publication date</div><div class="val">'+fmtDate(d.pubDate)+'</div>';
+  html += '<div class="lbl">Last update</div><div class="val">'+fmtDate(d.updDate)+'</div>';
+  if (d.creationDate) html += '<div class="lbl">Creation date</div><div class="val">'+fmtDate(d.creationDate)+'</div>';
+  html += '<div class="lbl">Countries participating</div><div class="val">'+esc((d.countries||[]).join(', ')||'—')+'</div>';
+  html += '<div class="lbl">Total members</div><div class="val">'+(d.memberCount||0)+'</div>';
+  html += '</div>';
+
+  document.getElementById('paneOverview').innerHTML = html;
+}
+
+function renderMembersPane(d) {
   var catLabels = {
-    '1': 'Type A \u2014 Individual experts',
-    '2': 'Type B \u2014 Representatives of interest',
-    '3': 'Type C \u2014 Organisations',
-    '4': 'Type D \u2014 Member State authorities',
-    '5': 'Type E \u2014 Other public entities'
+    '1': 'Type A — Individual experts',
+    '2': 'Type B — Representatives of interest',
+    '3': 'Type C — Organisations',
+    '4': 'Type D — Member State authorities',
+    '5': 'Type E — Other public entities'
   };
-
   var members = d.members || {};
-
-  for (var cat = 1; cat <= 5; cat++) {
+  var html = '<div class="member-cats">';
+  for (var cat=1; cat<=5; cat++) {
     var mlist = members[String(cat)] || [];
-    var card = document.createElement('div');
-    card.className = 'cat-card';
-
-    var items = '';
-    for (var j = 0; j < mlist.length; j++) {
-      var m = mlist[j];
-      var badge = m.status === 'Member'
-        ? '<span class="member-badge member-status">Member</span>'
-        : '<span class="member-badge observer-status">' + esc(m.status) + '</span>';
-
-      if (cat === 4) {
-        items += '<li>' + esc(m.country) + ' ' + badge + (m.paCount > 0 ? ' <small>(' + m.paCount + ' auth.)</small>' : '') + '</li>';
-      } else if (cat === 3 || cat === 5) {
-        var areas = (m.areas||[]).join(', ');
-        items += '<li>' + esc(m.name) + ' ' + badge + (areas ? '<br><small>Areas: ' + esc(areas) + '</small>' : '') + '</li>';
-      } else {
-        items += '<li>' + esc(m.name||'(unnamed)') + ' ' + badge + '</li>';
+    html += '<div class="cat-card"><h5>'+catLabels[String(cat)]+' ('+mlist.length+')</h5><ul>';
+    if (mlist.length === 0) {
+      html += '<li style="color:#999">No members</li>';
+    } else {
+      for (var j=0; j<mlist.length; j++) {
+        var m = mlist[j];
+        var badge = m.status==='Member'
+          ? '<span class="member-badge member-status">Member</span>'
+          : '<span class="member-badge observer-status">'+esc(m.status||'—')+'</span>';
+        html += '<li>';
+        if (cat===4) {
+          html += '<strong>'+esc(m.country||'—')+'</strong> '+badge;
+          if (m.paCount>0) html += ' <small>('+m.paCount+' auth.)</small>';
+          if (m.publicAuthorities && m.publicAuthorities.length>0) {
+            html += '<br><small>';
+            for (var k=0; k<m.publicAuthorities.length; k++) {
+              html += esc(m.publicAuthorities[k].name);
+              if (k<m.publicAuthorities.length-1) html += '; ';
+            }
+            html += '</small>';
+          }
+        } else {
+          html += '<strong>'+esc(m.name||'(unnamed)')+'</strong> '+badge;
+          if (m.category) html += ' <small>('+esc(m.category)+')</small>';
+          if (m.gender) html += ' <small>· '+esc(m.gender)+'</small>';
+          if (m.appointmentDate) html += '<br><small>Appointed: '+fmtDate(m.appointmentDate)+'</small>';
+          if (m.areas && m.areas.length>0) html += '<br><small>Areas: '+esc(m.areas.join(', '))+'</small>';
+          if (m.transparencyRegisterNumber) html += '<br><small>Transparency Reg.: '+esc(m.transparencyRegisterNumber)+'</small>';
+          if (cat===5 && m.entityType) html += '<br><small>Entity type: '+esc(m.entityType)+'</small>';
+        }
+        html += '</li>';
       }
     }
-
-    card.innerHTML = '<h5>' + catLabels[String(cat)] + ' (' + mlist.length + ')</h5><ul>' + (items || '<li style="color:#999">No members</li>') + '</ul>';
-    container.appendChild(card);
+    html += '</ul></div>';
   }
-
-  panel.style.display = 'block';
-  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  html += '</div>';
+  document.getElementById('paneMembers').innerHTML = html;
 }
 
-function closeMembersPanel() {
-  document.getElementById('membersPanel').style.display = 'none';
-  if (selectedRow) { selectedRow.classList.remove('selected-row'); selectedRow = null; }
+function renderStatisticsPane(d) {
+  var s = d.stats || {};
+  var html = '<div class="stats-grid">';
+  html += '<div class="stat-card"><div class="num">'+(s.totalMembers||d.memberCount||0)+'</div><div class="lbl">Total Members</div></div>';
+  html += '<div class="stat-card"><div class="num">'+(s.totalObservers||0)+'</div><div class="lbl">Total Observers</div></div>';
+  html += '<div class="stat-card"><div class="num">'+(s.maleCount||0)+'</div><div class="lbl">Male</div></div>';
+  html += '<div class="stat-card"><div class="num">'+(s.femaleCount||0)+'</div><div class="lbl">Female</div></div>';
+  if (s.otherGender) html += '<div class="stat-card"><div class="num">'+s.otherGender+'</div><div class="lbl">Other</div></div>';
+  html += '</div>';
+
+  // Per-category counts
+  var members = d.members || {};
+  var catLabels = {
+    '1':'Type A — Individual',
+    '2':'Type B — Representatives',
+    '3':'Type C — Organisations',
+    '4':'Type D — Member States',
+    '5':'Type E — Other public'
+  };
+  html += '<div class="section-title">Members by Category</div>';
+  html += '<div class="stats-grid">';
+  for (var c=1; c<=5; c++) {
+    var n = (members[String(c)]||[]).length;
+    html += '<div class="stat-card"><div class="num">'+n+'</div><div class="lbl">'+catLabels[String(c)]+'</div></div>';
+  }
+  html += '</div>';
+
+  // Raw stats (optional)
+  if (s.raw && Object.keys(s.raw).length > 0) {
+    html += '<div class="section-title">Raw Statistics (API)</div>';
+    html += '<pre style="background:#f4f6fa;padding:10px;border-radius:6px;font-size:.75rem;overflow:auto;max-height:220px">'+esc(JSON.stringify(s.raw, null, 2))+'</pre>';
+  }
+  document.getElementById('paneStatistics').innerHTML = html;
+}
+
+function renderAdditionalPane(d) {
+  var a = d.addInfo || {};
+  var html = '';
+
+  html += '<div class="section-title">Reference Links</div>';
+  html += '<div class="field-grid">';
+  if (a.website) html += '<div class="lbl">Website</div><div class="val"><a href="'+esc(a.website)+'" target="_blank" rel="noopener">'+esc(a.website)+'</a></div>';
+  else html += '<div class="lbl">Website</div><div class="val">—</div>';
+  if (d.torLink) html += '<div class="lbl">Terms of Reference</div><div class="val"><a href="'+esc(d.torLink)+'" target="_blank" rel="noopener">Open ToR</a></div>';
+  html += '</div>';
+
+  if (a.rulesOfProcedure) {
+    html += '<div class="section-title">Rules of Procedure</div>';
+    html += '<div class="val">'+esc(a.rulesOfProcedure)+'</div>';
+  }
+  if (a.selectionProcedure) {
+    html += '<div class="section-title">Selection Procedure</div>';
+    html += '<div class="val">'+esc(a.selectionProcedure)+'</div>';
+  }
+
+  function docSection(title, items) {
+    if (!items || items.length === 0) return '';
+    var h = '<div class="section-title">'+esc(title)+'</div><ul class="doc-list">';
+    for (var i=0; i<items.length; i++) {
+      var it = items[i];
+      if (typeof it === 'string') {
+        h += '<li>'+esc(it)+'</li>';
+      } else if (it && typeof it === 'object') {
+        var name = it.name || it.title || it.label || 'Document';
+        var url = it.url || it.link || '';
+        var date = it.date || it.year || '';
+        if (url) h += '<li><a href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(name)+'</a>'+(date?' <small>('+esc(date)+')</small>':'')+'</li>';
+        else h += '<li>'+esc(name)+(date?' <small>('+esc(date)+')</small>':'')+'</li>';
+      }
+    }
+    h += '</ul>';
+    return h;
+  }
+
+  html += docSection('Activity Reports', a.activityReports);
+  html += docSection('Meeting Minutes', a.meetingMinutes);
+  html += docSection('Agendas', a.agendas);
+  html += docSection('Other Documents', a.documents);
+
+  if (a.raw && Object.keys(a.raw).length > 0) {
+    html += '<div class="section-title">Raw Additional Info (API)</div>';
+    html += '<pre style="background:#f4f6fa;padding:10px;border-radius:6px;font-size:.75rem;overflow:auto;max-height:220px">'+esc(JSON.stringify(a.raw, null, 2))+'</pre>';
+  }
+
+  document.getElementById('paneAdditional').innerHTML = html;
 }
 
 // ─── CHARTS ───
 function buildCharts() {
-  if (typeof Chart === 'undefined') {
-    console.error('[Dashboard] Chart.js not loaded');
-    return;
-  }
-
-  var ctx = function(id) { return document.getElementById(id).getContext('2d'); };
-
-  charts.status = new Chart(ctx('chartStatus'), {
-    type:'doughnut',
-    data:{labels:[],datasets:[{data:[],backgroundColor:['#27ae60','#2c3e50','#f39c12']}]},
-    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
-  });
-
-  charts.type = new Chart(ctx('chartType'), {
-    type:'doughnut',
-    data:{labels:[],datasets:[{data:[],backgroundColor:['#003399','#70a1ff']}]},
-    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}
-  });
-
-  charts.dg = new Chart(ctx('chartDg'), {
-    type:'bar',
-    data:{labels:[],datasets:[{data:[],backgroundColor:'#003399'}]},
-    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
-  });
-
-  charts.policy = new Chart(ctx('chartPolicy'), {
-    type:'bar',
-    data:{labels:[],datasets:[{data:[],backgroundColor:'#FFCC00'}]},
-    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
-  });
-
-  charts.countries = new Chart(ctx('chartCountries'), {
-    type:'bar',
-    data:{labels:[],datasets:[{label:'Groups',data:[],backgroundColor:'#003399'}]},
-    options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}
-  });
-
-  buildEUMap();
+  if (typeof Chart === 'undefined') { console.error('Chart.js not loaded'); return; }
+  var ctx = function(id){ return document.getElementById(id).getContext('2d'); };
+  charts.status = new Chart(ctx('chartStatus'), {type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:['#27ae60','#2c3e50','#f39c12']}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}});
+  charts.type = new Chart(ctx('chartType'), {type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:['#003399','#70a1ff']}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}});
+  charts.dg = new Chart(ctx('chartDg'), {type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:'#003399'}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}});
+  charts.policy = new Chart(ctx('chartPolicy'), {type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:'#FFCC00'}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}});
+  charts.countries = new Chart(ctx('chartCountries'), {type:'bar',data:{labels:[],datasets:[{label:'Groups',data:[],backgroundColor:'#003399'}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}});
 }
 
 function updateCharts() {
   if (!chartsReady || !charts.status) return;
-
-  // Status
-  var sc = {};
-  filtered.forEach(function(d) { sc[d.status] = (sc[d.status]||0)+1; });
-  charts.status.data.labels = Object.keys(sc);
-  charts.status.data.datasets[0].data = Object.values(sc);
-  charts.status.update();
-
-  // Type
-  var tc = {};
-  filtered.forEach(function(d) { tc[d.type] = (tc[d.type]||0)+1; });
-  charts.type.data.labels = Object.keys(tc);
-  charts.type.data.datasets[0].data = Object.values(tc);
-  charts.type.update();
-
-  // DGs top 10
-  var dc = {};
-  filtered.forEach(function(d) {
-    (d.leadDgs||'').split(', ').filter(Boolean).forEach(function(v) { dc[v]=(dc[v]||0)+1; });
-  });
-  var dSorted = Object.entries(dc).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
-  charts.dg.data.labels = dSorted.map(function(x){return x[0]});
-  charts.dg.data.datasets[0].data = dSorted.map(function(x){return x[1]});
-  charts.dg.update();
-
-  // Policy top 10
-  var pc = {};
-  filtered.forEach(function(d) {
-    (d.policyAreas||'').split(', ').filter(Boolean).forEach(function(v) { pc[v]=(pc[v]||0)+1; });
-  });
-  var pSorted = Object.entries(pc).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
-  charts.policy.data.labels = pSorted.map(function(x){return x[0]});
-  charts.policy.data.datasets[0].data = pSorted.map(function(x){return x[1]});
-  charts.policy.update();
+  var sc={}; filtered.forEach(function(d){sc[d.status]=(sc[d.status]||0)+1});
+  charts.status.data.labels = Object.keys(sc); charts.status.data.datasets[0].data = Object.values(sc); charts.status.update();
+  var tc={}; filtered.forEach(function(d){tc[d.type]=(tc[d.type]||0)+1});
+  charts.type.data.labels = Object.keys(tc); charts.type.data.datasets[0].data = Object.values(tc); charts.type.update();
+  var dc={}; filtered.forEach(function(d){(d.leadDgsList||[]).forEach(function(v){dc[v]=(dc[v]||0)+1})});
+  var dS = Object.entries(dc).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
+  charts.dg.data.labels = dS.map(function(x){return x[0]}); charts.dg.data.datasets[0].data = dS.map(function(x){return x[1]}); charts.dg.update();
+  var pc={}; filtered.forEach(function(d){(d.policyAreasList||[]).forEach(function(v){pc[v]=(pc[v]||0)+1})});
+  var pS = Object.entries(pc).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
+  charts.policy.data.labels = pS.map(function(x){return x[0]}); charts.policy.data.datasets[0].data = pS.map(function(x){return x[1]}); charts.policy.update();
 }
 
 function updateCountryCharts() {
   if (!chartsReady || !charts.countries) return;
-
-  var cc = {};
-  filtered.forEach(function(d) {
-    (d.countries||[]).forEach(function(c) { cc[c] = (cc[c]||0)+1; });
-  });
-  var sorted = Object.entries(cc).sort(function(a,b){return b[1]-a[1]});
-  var top20 = sorted.slice(0, 20);
-
-  charts.countries.data.labels = top20.map(function(x){return x[0]});
-  charts.countries.data.datasets[0].data = top20.map(function(x){return x[1]});
+  countryCounts = {};
+  filtered.forEach(function(d){ (d.countries||[]).forEach(function(c){countryCounts[c]=(countryCounts[c]||0)+1}) });
+  var sorted = Object.entries(countryCounts).sort(function(a,b){return b[1]-a[1]}).slice(0,20);
+  charts.countries.data.labels = sorted.map(function(x){return x[0]});
+  charts.countries.data.datasets[0].data = sorted.map(function(x){return x[1]});
   charts.countries.update();
-
-  updateMapColors(cc);
+  updateMapColors();
 }
 
-// ─── EU MAP ───
-function buildEUMap() {
-  var wrap = document.getElementById('mapSvgWrap');
-  var tooltip = document.getElementById('mapTooltip');
+// ─── LEAFLET MAP ───
+function initLeafletMap() {
+  if (typeof L === 'undefined') { console.error('Leaflet not loaded'); return; }
 
-  var svgStr = '<svg viewBox="330 100 340 300" xmlns="http://www.w3.org/2000/svg">';
-  var isoKeys = Object.keys(EU_PATHS);
-  for (var i = 0; i < isoKeys.length; i++) {
-    var iso = isoKeys[i];
-    svgStr += '<path id="map-' + iso + '" d="' + EU_PATHS[iso] + '" fill="#d4dff0" stroke="#fff" stroke-width="1" data-iso="' + iso + '" style="cursor:pointer;transition:fill .2s"/>';
-  }
-  svgStr += '</svg>';
-  wrap.innerHTML = svgStr;
+  leafletMap = L.map('leafletMap', {
+    center: [54, 15], zoom: 3, minZoom: 2, maxZoom: 7,
+    scrollWheelZoom: false, worldCopyJump: false
+  });
 
-  var paths = wrap.querySelectorAll('path');
-  for (var j = 0; j < paths.length; j++) {
-    (function(p) {
-      p.addEventListener('mouseenter', function() {
-        var iso = p.dataset.iso;
-        var name = findCountryName(iso);
-        var count = p.dataset.count || 0;
-        tooltip.innerHTML = '<strong>' + name + '</strong><br>' + count + ' groups';
-        tooltip.style.display = 'block';
-      });
-      p.addEventListener('mousemove', function(e) {
-        var rect = wrap.getBoundingClientRect();
-        tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
-        tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
-      });
-      p.addEventListener('mouseleave', function() { tooltip.style.display = 'none'; });
-      p.addEventListener('click', function() {
-        var iso = p.dataset.iso;
-        var name = findCountryName(iso);
-        document.getElementById('fCountry').value = name;
-        page = 0;
-        applyFilters();
-      });
-    })(paths[j]);
-  }
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(leafletMap);
 
-  // Legend
-  var legend = document.getElementById('mapLegend');
+  // Load European GeoJSON from CDN (Natural Earth simplified)
+  var geoUrl = 'https://cdn.jsdelivr.net/gh/leakyMirror/map-of-europe@master/GeoJSON/europe.geojson';
+  fetch(geoUrl)
+    .then(function(r){ return r.json(); })
+    .then(function(geo){
+      geoLayer = L.geoJSON(geo, {
+        style: function(feature){ return styleForFeature(feature); },
+        onEachFeature: function(feature, layer) {
+          var name = getCountryName(feature);
+          layer.on({
+            mouseover: function(e){ e.target.setStyle({weight:2, color:'#003399', fillOpacity:.85}); e.target.bindTooltip('<strong>'+esc(name)+'</strong><br>'+(countryCounts[name]||0)+' groups', {sticky:true}).openTooltip(); },
+            mouseout:  function(e){ geoLayer.resetStyle(e.target); },
+            click:     function(){ document.getElementById('fCountry').value = name; page=0; applyFilters(); }
+          });
+        }
+      }).addTo(leafletMap);
+      updateMapColors();
+    })
+    .catch(function(e){ console.error('GeoJSON load failed:', e); });
+
+  // Build legend
+  var legendEl = document.getElementById('mapLegend');
   var buckets = [
     {color:'#d4dff0', label:'0'},
     {color:'#a8c4e0', label:'1-50'},
@@ -628,59 +747,56 @@ function buildEUMap() {
     {color:'#003399', label:'151-300'},
     {color:'#001a4d', label:'300+'}
   ];
-  var legendHtml = '';
-  for (var k = 0; k < buckets.length; k++) {
-    legendHtml += '<span><i style="background:' + buckets[k].color + '"></i>' + buckets[k].label + '</span>';
-  }
-  legend.innerHTML = legendHtml;
+  var lh = ''; for (var i=0; i<buckets.length; i++) lh += '<span><i style="background:'+buckets[i].color+'"></i>'+buckets[i].label+'</span>';
+  legendEl.innerHTML = lh;
 }
 
-function findCountryName(iso) {
-  var keys = Object.keys(COUNTRY_ISO);
-  for (var i = 0; i < keys.length; i++) {
-    if (COUNTRY_ISO[keys[i]] === iso) return keys[i];
-  }
-  return iso;
+function getCountryName(feature) {
+  var p = feature.properties || {};
+  // Try common property names from various GeoJSON sources
+  var name = p.NAME || p.name || p.admin || p.ADMIN || p.NAME_EN || p.NAME_LONG || '';
+  // Map common variants to our dataset names
+  if (name === 'Czech Rep.' || name === 'Czechia') name = 'Czech Republic';
+  if (name === 'Bosnia and Herz.') name = 'Bosnia and Herzegovina';
+  if (name === 'Macedonia') name = 'North Macedonia';
+  if (name === 'The former Yugoslav Republic of Macedonia') name = 'North Macedonia';
+  return name;
 }
 
-function updateMapColors(countryCount) {
-  var entries = Object.entries(COUNTRY_ISO);
-  for (var i = 0; i < entries.length; i++) {
-    var name = entries[i][0];
-    var iso = entries[i][1];
-    var el = document.getElementById('map-' + iso);
-    if (!el) continue;
-    var count = countryCount[name] || 0;
-    el.dataset.count = count;
-    var color;
-    if (count === 0) color = '#d4dff0';
-    else if (count <= 50) color = '#a8c4e0';
-    else if (count <= 150) color = '#6a9fd8';
-    else if (count <= 300) color = '#003399';
-    else color = '#001a4d';
-    el.style.fill = color;
-  }
+function styleForFeature(feature) {
+  var name = getCountryName(feature);
+  var count = countryCounts[name] || 0;
+  return { fillColor: colorForCount(count), weight: 1, color: '#fff', fillOpacity: .75 };
+}
+
+function colorForCount(count) {
+  if (count === 0) return '#d4dff0';
+  if (count <= 50) return '#a8c4e0';
+  if (count <= 150) return '#6a9fd8';
+  if (count <= 300) return '#003399';
+  return '#001a4d';
+}
+
+function updateMapColors() {
+  if (!geoLayer) return;
+  geoLayer.eachLayer(function(layer){
+    var name = getCountryName(layer.feature);
+    var count = countryCounts[name] || 0;
+    layer.setStyle({ fillColor: colorForCount(count) });
+  });
 }
 
 // ─── EXPORTS ───
 function exportCSV() {
-  var headers = ['Code','Title','Status','Type','Lead DGs','Policy Areas','Countries','Types','Scope','Tasks','Parent Code','Publication Date','Update Date'];
-  var rows = filtered.map(function(d) {
-    return [d.code,d.title,d.status,d.type,d.leadDgs,d.policyAreas,(d.countries||[]).join('; '),d.types,d.scope,d.tasks,d.parentCode,d.pubDate,d.updDate].map(function(v){return '"'+(v||'').replace(/"/g,'""')+'"'}).join(',');
+  var headers = ['Code','Title','Abbr','Status','Type','Formal/Informal','Lead DGs','Assoc DGs','Policy Areas','Tasks','Scope','Countries','Member Count','Publication','Updated','Mission'];
+  var rows = filtered.map(function(d){
+    return [d.code,d.title,d.abbr,d.status,d.type,d.types,d.leadDgs,d.assocDgs,d.policyAreas,d.tasks,d.scope,(d.countries||[]).join('; '),d.memberCount,d.pubDate,d.updDate,d.mission]
+      .map(function(v){return '"'+(v==null?'':String(v)).replace(/"/g,'""')+'"'}).join(',');
   });
   download('expert_groups.csv', 'text/csv;charset=utf-8', '\uFEFF' + headers.join(',') + '\n' + rows.join('\n'));
 }
-
-function exportJSON() {
-  download('expert_groups.json', 'application/json', JSON.stringify(filtered, null, 2));
-}
-
-function download(name, type, content) {
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content],{type:type}));
-  a.download = name;
-  a.click();
-}
+function exportJSON(){ download('expert_groups.json', 'application/json', JSON.stringify(filtered, null, 2)); }
+function download(name,type,content){ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type:type})); a.download=name; a.click(); }
 </script>
 </body>
 </html>
