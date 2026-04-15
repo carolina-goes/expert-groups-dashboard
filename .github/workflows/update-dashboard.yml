@@ -11,7 +11,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 180    # 3 hours (member fetch takes ~1-2h)
+    timeout-minutes: 350    # safety net; with parallel fetch ~15-25 min expected
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
