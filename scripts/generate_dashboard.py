@@ -17,6 +17,8 @@ BASE = "https://ec.europa.eu/transparency/expert-groups-register/core/api/front"
 SEARCH_URL  = f"{BASE}/expertGroups/search"
 DETAIL_URL  = f"{BASE}/expertGroups"
 MEMBERS_URL = f"{BASE}/members"
+STATS_URL   = f"{BASE}/expertGroups"      # /{id}/statistics
+ADDINFO_URL = f"{BASE}/expertGroups"      # /{id}/additionalInformation
 
 REF_ENDPOINTS = {
     "statuses":    f"{BASE}/status",
@@ -114,6 +116,33 @@ def fetch_members_for_group(group_id):
     return members, sorted(countries)
 
 
+def fetch_statistics_for_group(group_id):
+    """Fetch /statistics endpoint for a group."""
+    url = f"{STATS_URL}/{group_id}/statistics"
+    data = safe_get_json(url)
+    return data or {}
+
+
+def fetch_additional_info_for_group(group_id):
+    """Fetch /additionalInformation endpoint for a group."""
+    url = f"{ADDINFO_URL}/{group_id}/additionalInformation"
+    data = safe_get_json(url)
+    return data or {}
+
+
+def fetch_all_extras_for_group(group_id):
+    """Fetch members + statistics + additionalInformation for a single group."""
+    members, countries = fetch_members_for_group(group_id)
+    stats = fetch_statistics_for_group(group_id)
+    addinfo = fetch_additional_info_for_group(group_id)
+    return {
+        "members": members,
+        "countries": countries,
+        "statistics": stats,
+        "additionalInfo": addinfo,
+    }
+
+
 def fetch_all_details(ids):
     records = []
     errors = []
@@ -136,93 +165,149 @@ def fetch_all_details(ids):
     return records, errors
 
 
-def fetch_all_members(records):
-    """Fetch members for all groups. Returns dict keyed by numeric group id."""
-    members_map = {}
+def fetch_all_extras(records):
+    """Fetch members + statistics + additional info for all groups."""
+    extras_map = {}
     total = len(records)
     for i, rec in enumerate(records):
         gid = rec.get("_numericId")
         if gid is None:
             continue
         try:
-            members, countries = fetch_members_for_group(gid)
-            members_map[gid] = {"members": members, "countries": countries}
+            extras_map[gid] = fetch_all_extras_for_group(gid)
         except Exception:
-            members_map[gid] = {"members": {}, "countries": []}
+            extras_map[gid] = {"members": {}, "countries": [], "statistics": {}, "additionalInfo": {}}
 
-        if (i + 1) % 20 == 0 or (i + 1) == total:
+        if (i + 1) % 10 == 0 or (i + 1) == total:
             pct = 100 * (i + 1) // total
-            print(f"\r  Progress (members): {i+1}/{total} ({pct}%)", end="", flush=True)
+            print(f"\r  Progress (extras): {i+1}/{total} ({pct}%)", end="", flush=True)
         time.sleep(BATCH_DELAY)
     print()
-    return members_map
+    return extras_map
 
 
 def compact_member(m, cat):
-    """Compact a single member record."""
+    """Compact a single member record — captures ALL available fields."""
     base = {
-        "status": m.get("membershipStatus", ""),
+        "status":           m.get("membershipStatus", ""),
+        "name":             m.get("name", ""),
+        "category":         m.get("category", ""),
+        "appointmentDate":  m.get("appointmentDate", ""),
+        "gender":           m.get("gender", ""),
+        "role":             m.get("role", ""),
     }
-    if cat == 1 or cat == 2:
-        base["name"] = m.get("name", "")
-        base["category"] = m.get("category", "")
-    elif cat == 3:
-        base["name"] = m.get("name", "")
-        base["category"] = m.get("category", "")
+    # Category-specific fields
+    if cat == 3 or cat == 5:
         base["areas"] = m.get("areasRepresented", [])
-    elif cat == 4:
+        base["transparencyRegisterNumber"] = m.get("transparencyRegisterNumber", "")
+    if cat == 2:
+        base["transparencyRegisterNumber"] = m.get("transparencyRegisterNumber", "")
+    if cat == 4:
         base["country"] = m.get("country", "")
         base["paCount"] = m.get("publicAuthorityCount", 0)
-    elif cat == 5:
-        base["name"] = m.get("name", "")
+        # Public authorities list may be present
+        pas = m.get("publicAuthorities") or []
+        if pas:
+            base["publicAuthorities"] = [
+                {"name": pa.get("name", ""), "role": pa.get("role", "")}
+                for pa in pas if isinstance(pa, dict)
+            ]
+    if cat == 5:
         base["entityType"] = m.get("entityType", "")
-        base["areas"] = m.get("areasRepresented", [])
     return base
 
 
-def compact_record(r, members_info=None):
+def compact_record(r, extras=None):
+    """Compact a group record with ALL fields: basic + members + stats + additionalInfo."""
     def labels(arr):
         return ", ".join(x.get("label", x.get("code", "")) for x in (arr or []) if isinstance(x, dict))
+    def labels_list(arr):
+        return [x.get("label", x.get("code", "")) for x in (arr or []) if isinstance(x, dict)]
+
     status_obj  = r.get("status") if isinstance(r.get("status"), dict) else {}
     main_group  = r.get("mainGroup") if isinstance(r.get("mainGroup"), dict) else {}
     type_labels = [t.get("label", "") for t in (r.get("types") or []) if isinstance(t, dict)]
 
     result = {
-        "code":       (r.get("codeGroup") or "").strip(),
-        "title":      r.get("title") or "",
-        "status":     status_obj.get("label", ""),
-        "statusCode": status_obj.get("code", ""),
-        "type":       r.get("type") or "",
-        "abbr":       r.get("abbreviation") or "",
-        "policyAreas": labels(r.get("policyAreas")),
-        "leadDgs":    labels(r.get("leadDgs")),
-        "assocDgs":   labels(r.get("associatedDgs")),
-        "types":      ", ".join(type_labels),
-        "scope":      labels(r.get("scope")),
+        # Identification
+        "code":        (r.get("codeGroup") or "").strip(),
+        "title":       r.get("title") or "",
+        "status":      status_obj.get("label", ""),
+        "statusCode":  status_obj.get("code", ""),
+        "type":        r.get("type") or "",
+        "abbr":        r.get("abbreviation") or "",
+        # Classification (both as strings and lists)
+        "policyAreas":     labels(r.get("policyAreas")),
+        "policyAreasList": labels_list(r.get("policyAreas")),
+        "leadDgs":         labels(r.get("leadDgs")),
+        "leadDgsList":     labels_list(r.get("leadDgs")),
+        "assocDgs":        labels(r.get("associatedDgs")),
+        "assocDgsList":    labels_list(r.get("associatedDgs")),
+        "types":           ", ".join(type_labels),
+        "typesList":       type_labels,
+        "scope":           labels(r.get("scope")),
+        "scopeList":       labels_list(r.get("scope")),
+        "tasks":           labels(r.get("tasks")),
+        "tasksList":       labels_list(r.get("tasks")),
+        "policyOther":     r.get("policyAreaOther") or "",
+        # Description
         "mission":    r.get("mission") or "",
-        "tasks":      labels(r.get("tasks")),
-        "contact":    r.get("contact") or "",
-        "pubDate":    r.get("publicationDate") or "",
-        "updDate":    r.get("updateDate") or "",
         "createAct":  r.get("creatingAct") or "",
         "torLink":    r.get("torLink") or "",
-        "policyOther": r.get("policyAreaOther") or "",
-        "parentCode": (main_group.get("codeGroup") or "").strip(),
-        "parentTitle": main_group.get("title") or "",
+        "contact":    r.get("contact") or "",
+        # Dates
+        "pubDate":       r.get("publicationDate") or "",
+        "updDate":       r.get("updateDate") or "",
+        "creationDate":  r.get("creationDate") or "",
+        # Structure
+        "parentCode":    (main_group.get("codeGroup") or "").strip(),
+        "parentTitle":   main_group.get("title") or "",
     }
 
-    # Add member data
-    if members_info:
-        result["countries"] = members_info.get("countries", [])
-        raw_members = members_info.get("members", {})
+    # --- Members ---
+    if extras:
+        result["countries"] = extras.get("countries", [])
+        raw_members = extras.get("members", {})
         compacted = {}
+        total_members = 0
         for cat_str, mlist in raw_members.items():
             cat = int(cat_str)
             compacted[cat_str] = [compact_member(m, cat) for m in mlist]
+            total_members += len(mlist)
         result["members"] = compacted
+        result["memberCount"] = total_members
+
+        # --- Statistics ---
+        stats = extras.get("statistics") or {}
+        result["stats"] = {
+            "totalMembers":   stats.get("totalMembers", 0),
+            "totalObservers": stats.get("totalObservers", 0),
+            "maleCount":      stats.get("maleCount", 0),
+            "femaleCount":    stats.get("femaleCount", 0),
+            "otherGender":    stats.get("otherGender", 0),
+            "byCategory":     stats.get("byCategory", {}),
+            "byGender":       stats.get("byGender", {}),
+            "raw":            stats,  # keep raw in case fields vary
+        }
+
+        # --- Additional Info ---
+        addinfo = extras.get("additionalInfo") or {}
+        result["addInfo"] = {
+            "website":           addinfo.get("website", ""),
+            "rulesOfProcedure":  addinfo.get("rulesOfProcedure", ""),
+            "selectionProcedure": addinfo.get("selectionProcedure", ""),
+            "activityReports":   addinfo.get("activityReports", []),
+            "meetingMinutes":    addinfo.get("meetingMinutes", []),
+            "agendas":           addinfo.get("agendas", []),
+            "documents":         addinfo.get("documents", []),
+            "raw":               addinfo,  # keep raw
+        }
     else:
         result["countries"] = []
         result["members"] = {}
+        result["memberCount"] = 0
+        result["stats"] = {}
+        result["addInfo"] = {}
 
     return result
 
@@ -241,14 +326,14 @@ def fetch_all_data():
         for e in errors[:5]:
             print(f"    ID {e['id']}: {e['error']}")
 
-    print(f"\n  Fetching members for {len(records)} groups (5 categories each)...")
-    members_map = fetch_all_members(records)
-    print(f"  Members fetched for {len(members_map)} groups.")
+    print(f"\n  Fetching extras (members + stats + addInfo) for {len(records)} groups...")
+    extras_map = fetch_all_extras(records)
+    print(f"  Extras fetched for {len(extras_map)} groups.")
 
     compact = []
     for r in records:
         gid = r.get("_numericId")
-        mi = members_map.get(gid)
+        mi = extras_map.get(gid)
         compact.append(compact_record(r, mi))
 
     return compact, ref_data
